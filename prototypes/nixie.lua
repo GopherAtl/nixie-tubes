@@ -7,6 +7,7 @@ data:extend(
     ingredients =
     {
       {"electronic-circuit",1},
+      {"iron-plate",2},
       {"iron-stick", 10},
     },
     result = "nixie-tube"
