@@ -112,7 +112,6 @@ end
 
 function onSave()
   global.nixie_tubes={nixies=nixie_map, version=mod_version}
-  --copy and clean up the table, removing empty rows
 end
 
 
@@ -132,7 +131,7 @@ end
 local function onPlaceEntity(event)
   local entity=event.created_entity
   if entity.name=="nixie-tube-sprite" then
-    local desc={}
+
     debug("placing")
     entity.insert({name="coal",count=1})
     --place the /real/ thing at same spot
@@ -151,20 +150,18 @@ local function onPlaceEntity(event)
           spriteobj=entity,
        }
     trace_nixies()
-
-    --check for a neighbor on the right - he will be my master!
-    desc.master=getDescAtPos{x=pos.x+1,y=pos.y}
-    if desc.master then
-      debug("slaving to dude at "..(pos.x+1)..","..pos.y)
-      desc.master.slave=desc
+    --enslave guy to left, if there is one
+    local neighbor=nixie_map[pos.y][pos.x-1]
+    if neighbor then
+      debug("enslaving dude on the left")
+      neighbor.slave = true
     end
-    --and the left, he will be our slave!
-    desc.slave=getDescAtPos{x=pos.x-1,y=pos.y}
-    if desc.slave then
-      debug("enslaving dude at "..(pos.x-1)..","..pos.y)
-      desc.slave.master=desc
+    --slave self to right, if any
+    neighbor=nixie_map[pos.y][pos.x+1]
+    if neighbor then
+      debug("slaving to dude on the right")
+      desc.slave=true
     end
-
     nixie_map[nixie.position.y][nixie.position.x] = desc
   end
 end
@@ -176,6 +173,11 @@ local function onRemoveEntity(entity)
     if nixie_desc then
       removeSpriteObj(nixie_desc)
       nixie_map[pos.y][pos.x]=nil
+      --if I had a slave, unslave him
+      local slave=nixie_map[pos.y][pos.x-1]
+      if slave then
+        slave.slave=nil
+      end
     end
   end
 end
@@ -187,7 +189,7 @@ local function onTick(event)
     for y,row in pairs(nixie_map) do
       for x,desc in pairs(row) do
         if desc.entity.valid then
-          if desc.master==nil then
+          if not desc.slave then
             local v=deduceSignalValue(desc.entity)
             local state="off"
             if v then
@@ -198,11 +200,11 @@ local function onTick(event)
                 v=(v-m)/10
                 state = tostring(m)
                 setState(d,state)
-                d=d.slave
+                d=nixie_map[d.pos.y][d.pos.x-1]
               until d==nil or v==0
               while d do
                 setState(d,"off")
-                d=d.slave
+                d=nixie_map[d.pos.y][d.pos.x-1]
               end
             end
           end

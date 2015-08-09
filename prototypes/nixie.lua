@@ -15,7 +15,7 @@ data:extend(
   {
     type = "item",
     name = "nixie-tube",
-    icon = "__gophers-test__/graphics/nixie-icon.png",
+    icon = "__nixie-tubes__/graphics/nixie-icon.png",
     flags = {"goes-to-quickbar"},
     subgroup = "energy",
     order = "c-a",
@@ -26,7 +26,7 @@ data:extend(
   {
     type = "lamp",
     name = "nixie-tube",
-    icon = "__gophers-test__/graphics/nixie-digit-0.png",
+    icon = "__nixie-tubes__/graphics/nixie-icon.png",
     flags = {"placeable-neutral","player-creation", "not-on-map"},
     minable = {hardness = 0.2, mining_time = 0.5, result = "nixie-tube"},
     max_health = 55,
@@ -43,7 +43,7 @@ data:extend(
     light = {intensity = 0.0, size = 0, color = {r=1, g=.6, b=.3, a=0}},
     picture_off =
     {
-      filename = "__gophers-test__/graphics/nixie-nope.png",
+      filename = "__nixie-tubes__/graphics/nixie-nope.png",
       priority = "high",
       width = 32,
       height = 64,
@@ -51,7 +51,7 @@ data:extend(
     },
     picture_on =
     {
-      filename = "__gophers-test__/graphics/nixie-nope.png",
+      filename = "__nixie-tubes__/graphics/nixie-nope.png",
       priority = "high",
       width = 32,
       height = 64,
@@ -77,7 +77,7 @@ data:extend(
   {
     type = "car",
     name = "nixie-tube-sprite",
-    icon = "__gophers-test__/graphics/nixie-digit-off.png",
+    icon = "__nixie-tubes__/graphics/nixie-icon.png",
     flags = {"pushable", "placeable-neutral", "player-creation"},
     minable = {mining_time = 1, result = "nixie-tube"},
     max_health = 200,
@@ -169,7 +169,7 @@ data:extend(
           stripes =
           {
             {
-             filename = "__gophers-test__/graphics/nixie-digit-strip.png",
+             filename = "__nixie-tubes__/graphics/nixie-digit-strip.png",
              width_in_frames = 1,
              height_in_frames = 12,
             },
