@@ -1,2 +1,2 @@
-require("prototypes.item.widget")
-require("prototypes.item.nixie")
+require("prototypes.widget")
+require("prototypes.nixie")
