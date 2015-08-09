@@ -11,7 +11,11 @@ end
 
 --swap comment to toggle debug prints
 --local function debug() end
-local debug = print
+local debug = function() end
+
+if debug_mode then
+  debug=print
+end
 
 function trace_nixies()
   debug("tracing nixie positions")
