@@ -3,7 +3,7 @@ data:extend(
   {
     type = "recipe",
     name = "nixie-tube",
-    enabled = "true",
+    enabled = "false",
     ingredients =
     {
       {"electronic-circuit",1},
@@ -17,7 +17,7 @@ data:extend(
     name = "nixie-tube",
     icon = "__nixie-tubes__/graphics/nixie-icon.png",
     flags = {"goes-to-quickbar"},
-    subgroup = "energy",
+    subgroup = "circuit-network",
     order = "c-a",
     place_result = "nixie-tube-sprite",
     stack_size = 50
