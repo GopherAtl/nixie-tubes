@@ -29,15 +29,6 @@ function trace_nixies()
   end
 end
 
-local function getDescAtPos(pos)
-  local res=nil
-  debug("checking for dude at "..pos.x..","..pos.y)
-  if nixie_map[pos.y] then
-    res=nixie_map[pos.y][pos.x]
-  end
-  return res
-end
-
 local function removeSpriteObj(nixie_desc)
   if nixie_desc and nixie_desc.spriteobj and nixie_desc.spriteobj.valid then
     nixie_desc.spriteobj.clear_items_inside()
@@ -147,8 +138,9 @@ local function onPlaceEntity(event)
     end
     debug("sprite pos = "..pos.x..","..pos.y)
     debug("nixie pos = "..nixie.position.x..","..nixie.position.y)
+    pos=nixie.position
     local desc={
-          pos=nixie.position,
+          pos=pos,
           state="off",
           entity=nixie,
           spriteobj=entity,
@@ -166,7 +158,7 @@ local function onPlaceEntity(event)
       debug("slaving to dude on the right")
       desc.slave=true
     end
-    nixie_map[nixie.position.y][nixie.position.x] = desc
+    nixie_map[pos.y][pos.x] = desc
   end
 end
 

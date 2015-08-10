@@ -32,8 +32,8 @@ data:extend(
     max_health = 55,
     order = "z[zebra]",
     corpse = "small-remnants",
-    collision_box = {{-0.4, -0.4}, {0.4, .4}},
-    selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
+    collision_box = {{-0.4, -0.9}, {0.4, .9}},
+    selection_box = {{-.5, -1.0}, {0.5, 1.0}},
     energy_source =
     {
       type = "electric",
@@ -45,17 +45,17 @@ data:extend(
     {
       filename = "__nixie-tubes__/graphics/nixie-nope.png",
       priority = "high",
-      width = 32,
+      width = 39,
       height = 64,
-      shift = {0, -.5}
+      shift = {0.1, .5}
     },
     picture_on =
     {
       filename = "__nixie-tubes__/graphics/nixie-nope.png",
       priority = "high",
-      width = 32,
+      width = 39,
       height = 64,
-      shift = {0, -0.5}
+      shift = {0.1, 0.5}
     },
     circuit_wire_connection_point =
     {
@@ -66,8 +66,8 @@ data:extend(
       },
       wire =
       {
-        red = {0.45, 0.25},
-        green = {0.45, 0.25},
+        red = {0.45, -.75},
+        green = {0.43, -.74},
       }
     },
 
@@ -159,11 +159,11 @@ data:extend(
       layers =
       {
         {
-          width = 32,
+          width = 39,
           height = 64,
           frame_count = 1,
           direction_count = 12,
-          shift = {0, -0.5},
+          shift = {0.1, 0.5},
           animation_speed = 0.1,
           max_advance = 0.2,
           stripes =
