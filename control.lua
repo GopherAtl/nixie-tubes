@@ -126,7 +126,7 @@ end
 local function onPlaceEntity(event)
   local entity=event.created_entity
   if entity.name=="nixie-tube-sprite" then
-
+    entity.orientation=0
     debug("placing")
     entity.insert({name="coal",count=1})
     --place the /real/ thing at same spot
@@ -159,6 +159,7 @@ local function onPlaceEntity(event)
       desc.slave=true
     end
     nixie_map[pos.y][pos.x] = desc
+
   end
 end
 

@@ -78,7 +78,7 @@ data:extend(
     type = "car",
     name = "nixie-tube-sprite",
     icon = "__nixie-tubes__/graphics/nixie-icon.png",
-    flags = {"pushable", "placeable-neutral", "player-creation"},
+    flags = {"placeable-neutral", "player-creation"},
     minable = {mining_time = 1, result = "nixie-tube"},
     max_health = 200,
     corpse = "small-remnants",
