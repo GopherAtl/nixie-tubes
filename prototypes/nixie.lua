@@ -15,7 +15,7 @@ data:extend(
   {
     type = "item",
     name = "nixie-tube",
-    icon = "__nixie-tubes__/graphics/nixie-icon.png",
+    icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
     flags = {"goes-to-quickbar"},
     subgroup = "circuit-network",
     order = "c-a",
