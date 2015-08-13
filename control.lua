@@ -51,8 +51,16 @@ local stateOrientMap = {
   ["7"]=step*8,
   ["8"]=step*9,
   ["9"]=step*10,
-  ["all"]=step*11,
+  ["minus"]=step*11,
 }
+
+local function updateSprite(nixie_desc)
+  if nixie_desc.has_power then
+    nixie_desc.spriteobj.orientation=stateOrientMap[nixie_desc.state]
+  else
+    nixie_desc.spriteobj.orientation=0 --off state
+  end
+end
 
 --sets the state, for now destroying and replacing the spriteobj if necessary
 local function setState(nixie_desc,newstate)
@@ -60,11 +68,11 @@ local function setState(nixie_desc,newstate)
     return
   end
 
-  nixie_desc.spriteobj.orientation=stateOrientMap[newstate]
 
   debug("state changed to "..newstate)
   debug("and nixie is "..(nixie_desc.spriteobj==nil and "nil" or "NOT nill"))
   nixie_desc.state=newstate
+  updateSprite(nixie_desc)
 end
 
 local function deduceSignalValue(entity)
@@ -188,11 +196,21 @@ local function onTick(event)
     for y,row in pairs(nixie_map) do
       for x,desc in pairs(row) do
         if desc.entity.valid then
+          if desc.entity.energy<70 then
+            if desc.has_power then
+              desc.has_power=false
+              updateSprite(desc)
+            end
+          elseif not desc.has_power then
+            desc.has_power=true
+            updateSprite(desc)
+          end
           if not desc.slave then
             local v=deduceSignalValue(desc.entity)
             local state="off"
             if v then
-              if v<0 then v=-v end
+              local minus=v<0
+              if minus then v=-v end
               local d=desc
               repeat
                 local m=v%10
@@ -201,7 +219,14 @@ local function onTick(event)
                 setState(d,state)
                 d=nixie_map[d.pos.y][d.pos.x-1]
               until d==nil or v==0
+              if d~=nil and minus then
+                setState(d,"minus")
+                d=nixie_map[d.pos.y][d.pos.x-1]
+              end
               while d do
+                if d.energy==0 then
+                  break
+                end
                 setState(d,"off")
                 d=nixie_map[d.pos.y][d.pos.x-1]
               end
