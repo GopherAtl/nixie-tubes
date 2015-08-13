@@ -2,7 +2,7 @@ data:extend({
   {
   	type = "technology",
   	name = "cathodes",
-    icon = "__nixie-tubes__/graphics/nixie-icon.png",
+    icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
   	unit = {
   		count=20,
       time=10,
