@@ -161,6 +161,10 @@ local function onPlaceEntity(event)
     if neighbor then
       debug("enslaving dude on the left")
       neighbor.slave = true
+      while neighbor do
+        setState(neighbor,"off")
+        neighbor=nixie_map[neighbor.pos.y][neighbor.pos.x-1]
+      end
     end
     --slave self to right, if any
     neighbor=nixie_map[pos.y][pos.x+1]
@@ -184,6 +188,10 @@ local function onRemoveEntity(entity)
       local slave=nixie_map[pos.y][pos.x-1]
       if slave then
         slave.slave=nil
+        while slave do
+          setState(slave,"off")
+          slave=nixie_map[slave.pos.y][slave.pos.x-1]
+        end
       end
     end
   end
