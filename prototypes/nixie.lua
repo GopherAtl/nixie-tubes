@@ -19,14 +19,14 @@ data:extend(
     flags = {"goes-to-quickbar"},
     subgroup = "circuit-network",
     order = "c-a",
-    place_result = "nixie-tube-sprite",
+    place_result = "nixie-tube",
     stack_size = 50
   },
 
   {
     type = "lamp",
     name = "nixie-tube",
-    icon = "__nixie-tubes__/graphics/nixie-icon.png",
+    icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
     flags = {"placeable-neutral","player-creation", "not-on-map"},
     minable = {hardness = 0.2, mining_time = 0.5, result = "nixie-tube"},
     max_health = 55,
@@ -43,31 +43,31 @@ data:extend(
     light = {intensity = 0.0, size = 0, color = {r=1, g=.6, b=.3, a=0}},
     picture_off =
     {
-      filename = "__nixie-tubes__/graphics/nixie-nope.png",
+      filename = "__nixie-tubes__/graphics/nixie-base.png",
       priority = "high",
-      width = 39,
-      height = 64,
-      shift = {0.1, .5}
+      width = 48,
+      height = 72,
+      shift = {7/32,-5/32}
     },
     picture_on =
     {
-      filename = "__nixie-tubes__/graphics/nixie-nope.png",
+      filename = "__nixie-tubes__/graphics/nixie-base.png",
       priority = "high",
-      width = 39,
-      height = 64,
-      shift = {0.1, 0.5}
+      width = 48,
+      height = 72,
+      shift = {7/32,-5/32}
     },
     circuit_wire_connection_point =
     {
       shadow =
       {
-        red = {0.859375, -0.896875},
-        green = {0.859375, -0.896875},
+        red = {0/32, 0/32},
+        green = {0/32, 0/32},
       },
       wire =
       {
-        red = {0.45, -.75},
-        green = {0.43, -.74},
+        red = {12/32, -42/32},
+        green = {12/32, -44/32},
       }
     },
 
@@ -77,10 +77,11 @@ data:extend(
   {
     type = "car",
     name = "nixie-tube-sprite",
-    icon = "__nixie-tubes__/graphics/nixie-icon.png",
-    flags = {"placeable-neutral", "player-creation"},
+    icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
+    flags = {"placeable-neutral", "placeable-off-grid", "player-creation"},
     minable = {mining_time = 1, result = "nixie-tube"},
     max_health = 200,
+    order="z[zebra]",
     corpse = "small-remnants",
     energy_per_hit_point = 1,
     crash_trigger = crash_trigger(),
@@ -159,17 +160,17 @@ data:extend(
       layers =
       {
         {
-          width = 39,
-          height = 64,
+          width = 20,
+          height = 44,
           frame_count = 1,
           direction_count = 12,
-          shift = {0.1, 0.5},
+          shift = {-2/32,-8/32},
           animation_speed = 0.1,
           max_advance = 0.2,
           stripes =
           {
             {
-             filename = "__nixie-tubes__/graphics/nixie-digit-strip.png",
+             filename = "__nixie-tubes__/graphics/nixie-digits.png",
              width_in_frames = 1,
              height_in_frames = 12,
             },

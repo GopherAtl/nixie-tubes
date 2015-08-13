@@ -125,25 +125,27 @@ end
 
 local function onPlaceEntity(event)
   local entity=event.created_entity
-  if entity.name=="nixie-tube-sprite" then
-    entity.orientation=0
+  if entity.name=="nixie-tube" then
     debug("placing")
-    entity.insert({name="coal",count=1})
     --place the /real/ thing at same spot
     local pos=entity.position
-    local nixie=game.surfaces.nauvis.create_entity({name="nixie-tube",position=pos,force=game.forces.neutral})
+    local nixie=entity.surface.create_entity(
+        {
+            name="nixie-tube-sprite",
+            position={x=pos.x+1/32, y=pos.y+1/32},force=entity.force})
+    nixie.orientation=0
+    nixie.insert({name="coal",count=1})
     --set me to look up the current entity from the interactive one
-    if not nixie_map[nixie.position.y] then
-      nixie_map[nixie.position.y]={}
+    if not nixie_map[entity.position.y] then
+      nixie_map[entity.position.y]={}
     end
-    debug("sprite pos = "..pos.x..","..pos.y)
-    debug("nixie pos = "..nixie.position.x..","..nixie.position.y)
-    pos=nixie.position
+    debug("lamp pos = "..pos.x..","..pos.y)
+    debug("car pos = "..nixie.position.x..","..nixie.position.y)
     local desc={
           pos=pos,
           state="off",
-          entity=nixie,
-          spriteobj=entity,
+          entity=entity,
+          spriteobj=nixie,
        }
     trace_nixies()
     --enslave guy to left, if there is one
