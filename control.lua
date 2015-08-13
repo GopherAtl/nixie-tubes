@@ -216,7 +216,7 @@ local function onTick(event)
           if not desc.slave then
             local v=deduceSignalValue(desc.entity)
             local state="off"
-            if v then
+            if v and desc.has_power then
               local minus=v<0
               if minus then v=-v end
               local d=desc
@@ -235,6 +235,12 @@ local function onTick(event)
                 if d.energy==0 then
                   break
                 end
+                setState(d,"off")
+                d=nixie_map[d.pos.y][d.pos.x-1]
+              end
+            else
+              local d=desc
+              while d do
                 setState(d,"off")
                 d=nixie_map[d.pos.y][d.pos.x-1]
               end
