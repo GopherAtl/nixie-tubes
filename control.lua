@@ -1,7 +1,8 @@
 require "config"
 
 local nixie_map = {}
-local mod_version="0.1.0"
+local mod_version="0.1.5"
+local mod_data_version="0.1.0"
 
 ---[[
 local function print(...)
@@ -114,7 +115,7 @@ local function deduceSignalValue(entity)
 end
 
 function onSave()
-  global.nixie_tubes={nixies=nixie_map, version=mod_version}
+  global.nixie_tubes={nixies=nixie_map, version=mod_version, data_version=mod_data_version}
 end
 
 
@@ -125,6 +126,7 @@ function onLoad()
     global.nixie_tubes={
         nixies={},
         version=mod_version,
+        data_version=mod_data_version,
       }
   end
 
@@ -140,7 +142,9 @@ local function onPlaceEntity(event)
     local nixie=entity.surface.create_entity(
         {
             name="nixie-tube-sprite",
-            position={x=pos.x+1/32, y=pos.y+1/32},force=entity.force})
+            position={x=pos.x+1/32, y=pos.y+1/32},
+            force=entity.force
+        })
     nixie.orientation=0
     nixie.insert({name="coal",count=1})
     --set me to look up the current entity from the interactive one
