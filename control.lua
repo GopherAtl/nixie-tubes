@@ -1,8 +1,10 @@
 require "config"
 
 local nixie_map = {}
-local mod_version="0.1.6"
+local mod_version="0.1.7"
 local mod_data_version="0.1.0"
+
+local ticksPerRefresh = math.ceil(60*refresh_rate)
 
 ---[[
 local function print(...)
@@ -116,6 +118,7 @@ local function deduceSignalValue(entity)
   return v
 end
 
+
 function onSave()
   global.nixie_tubes={nixies=nixie_map, version=mod_version, data_version=mod_data_version}
 end
@@ -204,9 +207,7 @@ local function onRemoveEntity(entity)
 end
 
 local function onTick(event)
-  --only update five times a second, rather than *every* tick.
-  --7th of 12 picked at random.
-  if event.tick%12 == 7 then
+  if event.tick%ticksPerRefresh == 0 then
     for y,row in pairs(nixie_map) do
       for x,desc in pairs(row) do
         if desc.entity.valid then
@@ -219,7 +220,14 @@ local function onTick(event)
             desc.has_power=true
             updateSprite(desc)
           end
-          if not desc.slave then
+          local open=false
+          for k,v in pairs(game.players) do
+            if v.opened==desc.entity then
+              open=true
+              break
+            end
+          end
+          if not open and not desc.slave then
             local v=deduceSignalValue(desc.entity)
             local state="off"
             if v and desc.has_power then
