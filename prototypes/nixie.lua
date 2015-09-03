@@ -37,9 +37,9 @@ data:extend(
     energy_source =
     {
       type = "electric",
-      usage_priority = "secondary-input"
+      usage_priority = "secondary-input",
     },
-    energy_usage_per_tick = "8KW",
+    energy_usage_per_tick = "4KW",
     light = {intensity = 0.0, size = 0, color = {r=1, g=.6, b=.3, a=0}},
     picture_off =
     {

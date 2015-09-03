@@ -1,7 +1,7 @@
 require "config"
 
 local nixie_map = {}
-local mod_version="0.1.5"
+local mod_version="0.1.6"
 local mod_data_version="0.1.0"
 
 ---[[
@@ -58,8 +58,10 @@ local stateOrientMap = {
 local function updateSprite(nixie_desc)
   if nixie_desc.has_power then
     nixie_desc.spriteobj.orientation=stateOrientMap[nixie_desc.state]
+    --nixie_desc.entity.active= (nixie_desc.state~="off")
   else
     nixie_desc.spriteobj.orientation=0 --off state
+    --nixie_desc.entity.active=false
   end
 end
 
