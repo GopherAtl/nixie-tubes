@@ -4,7 +4,7 @@ local nixie_map = {}
 local mod_version="0.1.7"
 local mod_data_version="0.1.0"
 
-local ticksPerRefresh = math.ceil(60*refresh_rate)
+local ticksPerRefresh = math.ceil(60 / refresh_rate)
 
 ---[[
 local function print(...)
