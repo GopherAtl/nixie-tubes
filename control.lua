@@ -119,24 +119,36 @@ local function deduceSignalValue(entity)
 end
 
 
-function onSave()
-  global.nixie_tubes={nixies=nixie_map, version=mod_version, data_version=mod_data_version}
+local function checkForMigration(old_version, new_version)
+  -- TODO: when a migration is necessary, trigger it here or set a flag.
 end
 
+
+local function checkForDataMigration(old_data_version, new_data_version)
+  -- TODO: when a migration is necessary, trigger it here or set a flag.
+end
 
 
 function onLoad()
-
   if not global.nixie_tubes then
-    global.nixie_tubes={
-        nixies={},
-        version=mod_version,
-        data_version=mod_data_version,
-      }
+    global.nixie_tubes={ nixies={} }
   end
+
+  -- The only reason to have version/data_version is to trigger migrations, so do that here.
+  if global.nixie_tubes.version then
+    checkForMigration(global.nixie_tubes.version, mod_version)
+  end
+  if global.nixie_tubes.data_version then
+    checkForDataMigration(global.nixie_tubes.data_version, mod_data_version)
+  end
+
+  -- After these lines, we can no longer check for migration.
+  global.nixie_tubes.version=mod_version
+  global.nixie_tubes.data_version=mod_data_version
 
   nixie_map=global.nixie_tubes.nixies
 end
+
 
 local function onPlaceEntity(event)
   local entity=event.created_entity
@@ -270,23 +282,19 @@ end
 
 
 
-game.on_init(onLoad)
-game.on_load(onLoad)
+script.on_init(onLoad)
+script.on_load(onLoad)
 
-game.on_save(onSave)
+script.on_event(defines.events.on_built_entity, onPlaceEntity)
+script.on_event(defines.events.on_robot_built_entity, onPlaceEntity)
 
-game.on_event(defines.events.on_tick,function() end)
+script.on_event(defines.events.on_preplayer_mined_item, function(event) onRemoveEntity(event.entity) end)
+script.on_event(defines.events.on_robot_pre_mined, function(event) onRemoveEntity(event.entity) end)
+script.on_event(defines.events.on_entity_died, function(event) onRemoveEntity(event.entity) end)
 
-game.on_event(defines.events.on_built_entity,onPlaceEntity)
-game.on_event(defines.events.on_robot_built_entity,onPlaceEntity)
+script.on_event(defines.events.on_tick, onTick)
 
-game.on_event(defines.events.on_preplayer_mined_item, function(event) onRemoveEntity(event.entity) end)
-game.on_event(defines.events.on_robot_pre_mined, function(event) onRemoveEntity(event.entity) end)
-game.on_event(defines.events.on_entity_died, function(event) onRemoveEntity(event.entity) end)
-
-game.on_event(defines.events.on_tick, onTick)
-
-game.on_event(defines.events.on_player_driving_changed_state,
+script.on_event(defines.events.on_player_driving_changed_state,
     function(event)
       local player=game.players[event.player_index]
       if player.vehicle and player.vehicle.name=="nixie-tube-sprite" then

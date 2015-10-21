@@ -1,10 +1,10 @@
 {
   "name": "nixie-tubes",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "title": "Nixie Tubes",
   "author": "GopherAtl",
   "homepage": "http://google.com",
   "contact": "gopheratl@gmail.com",
   "description": "Adds nixie tubes, for displaying values from a connected circuit network.",
-  "dependencies": ["base >= 0.12.0"]
+  "dependencies": ["base >= 0.12.11"]
 }
