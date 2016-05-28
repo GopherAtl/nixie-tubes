@@ -2,7 +2,7 @@ require "config"
 
 local nixie_map = {}
 local mod_version="0.1.7"
-local mod_data_version="0.1.0"
+local mod_data_version="0.2.0"
 
 local ticksPerRefresh = math.ceil(60 / refresh_rate)
 
@@ -25,9 +25,12 @@ function trace_nixies()
   for k,v in pairs(nixie_map) do
     str=k.." = { "
     for k2,v2 in pairs(v) do
-      str=str..k2
+      str=str..k2.." = { "
+        for k3,v3 in pairs(v2) do
+        str=str..k3
+      end
     end
-    str=str.."}"
+    str=str.."}}"
     debug(str)
   end
 end
@@ -126,6 +129,28 @@ end
 
 local function checkForDataMigration(old_data_version, new_data_version)
   -- TODO: when a migration is necessary, trigger it here or set a flag.
+  if old_data_version=="0.1.0" then
+  
+    local map = global.nixie_tubes.nixies
+    local newmap = {}
+    for y,v in pairs(map) do
+      for x,d in pairs(v) do
+        d.surf = d.entity.surface.index
+        
+		  if not newmap[d.surf] then
+		    newmap[d.surf]={}
+		  end
+		    if not newmap[d.surf][y] then
+		    newmap[d.surf][y]={}
+		  end
+		  
+		  newmap[d.surf][y][x]=d
+      end
+    end
+
+	 global.nixie_tubes.nixies=newmap
+	 
+  end
 end
 
 
@@ -156,6 +181,7 @@ local function onPlaceEntity(event)
     debug("placing")
     --place the /real/ thing at same spot
     local pos=entity.position
+    local surf=entity.surface.index
     local nixie=entity.surface.create_entity(
         {
             name="nixie-tube-sprite",
@@ -165,35 +191,39 @@ local function onPlaceEntity(event)
     nixie.orientation=0
     nixie.insert({name="coal",count=1})
     --set me to look up the current entity from the interactive one
-    if not nixie_map[entity.position.y] then
-      nixie_map[entity.position.y]={}
+    if not nixie_map[entity.surface.index] then
+      nixie_map[entity.surface.index]={}
+    end
+    if not nixie_map[entity.surface.index][entity.position.y] then
+      nixie_map[entity.surface.index][entity.position.y]={}
     end
     debug("lamp pos = "..pos.x..","..pos.y)
     debug("car pos = "..nixie.position.x..","..nixie.position.y)
     local desc={
           pos=pos,
+          surf=surf,
           state="off",
           entity=entity,
           spriteobj=nixie,
        }
     trace_nixies()
     --enslave guy to left, if there is one
-    local neighbor=nixie_map[pos.y][pos.x-1]
+    local neighbor=nixie_map[surf][pos.y][pos.x-1]
     if neighbor then
       debug("enslaving dude on the left")
       neighbor.slave = true
       while neighbor do
         setState(neighbor,"off")
-        neighbor=nixie_map[neighbor.pos.y][neighbor.pos.x-1]
+        neighbor=nixie_map[neighbor.surf][neighbor.pos.y][neighbor.pos.x-1]
       end
     end
     --slave self to right, if any
-    neighbor=nixie_map[pos.y][pos.x+1]
+    neighbor=nixie_map[surf][pos.y][pos.x+1]
     if neighbor then
       debug("slaving to dude on the right")
       desc.slave=true
     end
-    nixie_map[pos.y][pos.x] = desc
+    nixie_map[surf][pos.y][pos.x] = desc
 
   end
 end
@@ -201,17 +231,18 @@ end
 local function onRemoveEntity(entity)
   if entity.name=="nixie-tube" then
     local pos=entity.position
-    local nixie_desc=nixie_map[pos.y] and nixie_map[pos.y][pos.x]
+    local surf=entity.surface.index
+    local nixie_desc=nixie_map[surf][pos.y] and nixie_map[surf][pos.y][pos.x]
     if nixie_desc then
       removeSpriteObj(nixie_desc)
-      nixie_map[pos.y][pos.x]=nil
+      nixie_map[surf][pos.y][pos.x]=nil
       --if I had a slave, unslave him
-      local slave=nixie_map[pos.y][pos.x-1]
+      local slave=nixie_map[surf][pos.y][pos.x-1]
       if slave then
         slave.slave=nil
         while slave do
           setState(slave,"off")
-          slave=nixie_map[slave.pos.y][slave.pos.x-1]
+          slave=nixie_map[slave.surf][slave.pos.y][slave.pos.x-1]
         end
       end
     end
@@ -220,63 +251,65 @@ end
 
 local function onTick(event)
   if event.tick%ticksPerRefresh == 0 then
-    for y,row in pairs(nixie_map) do
-      for x,desc in pairs(row) do
-        if desc.entity.valid then
-          if desc.entity.energy<70 then
-            if desc.has_power then
-              desc.has_power=false
-              updateSprite(desc)
-            end
-          elseif not desc.has_power then
-            desc.has_power=true
-            updateSprite(desc)
-          end
-          local open=false
-          for k,v in pairs(game.players) do
-            if v.opened==desc.entity then
-              open=true
-              break
-            end
-          end
-          if not open and not desc.slave then
-            local v=deduceSignalValue(desc.entity)
-            local state="off"
-            if v and desc.has_power then
-              local minus=v<0
-              if minus then v=-v end
-              local d=desc
-              repeat
-                local m=v%10
-                v=(v-m)/10
-                state = tostring(m)
-                setState(d,state)
-                d=nixie_map[d.pos.y][d.pos.x-1]
-              until d==nil or v==0
-              if d~=nil and minus then
-                setState(d,"minus")
-                d=nixie_map[d.pos.y][d.pos.x-1]
-              end
-              while d do
-                if d.energy==0 then
-                  break
-                end
-                setState(d,"off")
-                d=nixie_map[d.pos.y][d.pos.x-1]
-              end
-            else
-              local d=desc
-              while d do
-                setState(d,"off")
-                d=nixie_map[d.pos.y][d.pos.x-1]
-              end
-            end
-          end
-        else
-          onRemoveEntity(desc.entity)
-        end
-      end
-    end
+    for s,surf in pairs(nixie_map) do
+	    for y,row in pairs(surf) do
+	      for x,desc in pairs(row) do
+	        if desc.entity.valid then
+	          if desc.entity.energy<70 then
+	            if desc.has_power then
+	              desc.has_power=false
+	              updateSprite(desc)
+	            end
+	          elseif not desc.has_power then
+	            desc.has_power=true
+	            updateSprite(desc)
+	          end
+	          local open=false
+	          for k,v in pairs(game.players) do
+	            if v.opened==desc.entity then
+	              open=true
+	              break
+	            end
+	          end
+	          if not open and not desc.slave then
+	            local v=deduceSignalValue(desc.entity)
+	            local state="off"
+	            if v and desc.has_power then
+	              local minus=v<0
+	              if minus then v=-v end
+	              local d=desc
+	              repeat
+	                local m=v%10
+	                v=(v-m)/10
+	                state = tostring(m)
+	                setState(d,state)
+	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
+	              until d==nil or v==0
+	              if d~=nil and minus then
+	                setState(d,"minus")
+	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
+	              end
+	              while d do
+	                if d.energy==0 then
+	                  break
+	                end
+	                setState(d,"off")
+	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
+	              end
+	            else
+	              local d=desc
+	              while d do
+	                setState(d,"off")
+	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
+	              end
+	            end
+	          end
+	        else
+	          onRemoveEntity(desc.entity)
+	        end
+	      end
+	    end
+	 end
   end
 end
 
