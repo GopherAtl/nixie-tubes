@@ -1,7 +1,7 @@
 require "config"
 
 local nixie_map = {}
-local mod_version="0.1.7"
+local mod_version="0.1.8"
 local mod_data_version="0.1.0"
 
 local ticksPerRefresh = math.ceil(60 / refresh_rate)
@@ -25,7 +25,7 @@ function trace_nixies()
   for k,v in pairs(nixie_map) do
     str=k.." = { "
     for k2,v2 in pairs(v) do
-      str=str..k2
+      str=str..","..k2
     end
     str=str.."}"
     debug(str)
@@ -199,19 +199,21 @@ local function onPlaceEntity(event)
 end
 
 local function onRemoveEntity(entity)
-  if entity.name=="nixie-tube" then
-    local pos=entity.position
-    local nixie_desc=nixie_map[pos.y] and nixie_map[pos.y][pos.x]
-    if nixie_desc then
-      removeSpriteObj(nixie_desc)
-      nixie_map[pos.y][pos.x]=nil
-      --if I had a slave, unslave him
-      local slave=nixie_map[pos.y][pos.x-1]
-      if slave then
-        slave.slave=nil
-        while slave do
-          setState(slave,"off")
-          slave=nixie_map[slave.pos.y][slave.pos.x-1]
+  if entity.valid then
+    if entity.name=="nixie-tube" then
+      local pos=entity.position
+      local nixie_desc=nixie_map[pos.y] and nixie_map[pos.y][pos.x]
+      if nixie_desc then
+        removeSpriteObj(nixie_desc)
+        nixie_map[pos.y][pos.x]=nil
+        --if I had a slave, unslave him
+        local slave=nixie_map[pos.y][pos.x-1]
+        if slave then
+          slave.slave=nil
+          while slave do
+            setState(slave,"off")
+            slave=nixie_map[slave.pos.y][slave.pos.x-1]
+          end
         end
       end
     end
