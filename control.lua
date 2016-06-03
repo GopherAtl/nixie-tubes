@@ -1,7 +1,7 @@
 require "config"
 
 local nixie_map = {}
-local mod_version="0.1.7"
+local mod_version="0.2.0"
 local mod_data_version="0.2.0"
 
 local ticksPerRefresh = math.ceil(60 / refresh_rate)
@@ -25,9 +25,9 @@ function trace_nixies()
   for k,v in pairs(nixie_map) do
     str=k.." = { "
     for k2,v2 in pairs(v) do
-      str=str..k2.." = { "
+      str=str..","..k2.." = { "
         for k3,v3 in pairs(v2) do
-        str=str..k3
+        str=str..","..k3
       end
     end
     str=str.."}}"
@@ -35,10 +35,14 @@ function trace_nixies()
   end
 end
 
-local function removeSpriteObj(nixie_desc)
-  if nixie_desc and nixie_desc.spriteobj and nixie_desc.spriteobj.valid then
-    nixie_desc.spriteobj.clear_items_inside()
-    nixie_desc.spriteobj.destroy()
+local function removeSpriteObjs(nixie_desc)
+  if nixie_desc and nixie_desc.spriteobjs then
+    for k,obj in ipairs(nixie_desc.spriteobjs) do
+      if obj.valid then
+        obj.clear_items_inside()
+        obj.destroy()
+  end
+end
   end
 end
 
@@ -60,27 +64,33 @@ local stateOrientMap = {
   ["minus"]=step*11,
 }
 
-local function updateSprite(nixie_desc)
+local function updateSprite(nixie_desc,key)
+  local obj = nixie_desc.spriteobjs[key]
   if nixie_desc.has_power then
-    nixie_desc.spriteobj.orientation=stateOrientMap[nixie_desc.state]
+    obj.orientation=stateOrientMap[nixie_desc.states[key]]
     --nixie_desc.entity.active= (nixie_desc.state~="off")
   else
-    nixie_desc.spriteobj.orientation=0 --off state
+    obj.orientation=0 --off state
     --nixie_desc.entity.active=false
   end
 end
 
---sets the state, for now destroying and replacing the spriteobj if necessary
-local function setState(nixie_desc,newstate)
-  if newstate==nixie_desc.state then
-    return
+local function updateSprites(nixie_desc)
+  for key,obj in ipairs(nixie_desc.spriteobjs) do
+    updateSprite(nixie_desc,key)
   end
+end
 
-
-  debug("state changed to "..newstate)
-  debug("and nixie is "..(nixie_desc.spriteobj==nil and "nil" or "NOT nill"))
-  nixie_desc.state=newstate
-  updateSprite(nixie_desc)
+--sets the state, for now destroying and replacing the spriteobj if necessary
+local function setStates(nixie_desc,newstates)
+  for key,new_state in ipairs(newstates) do
+    if new_state ~= nixie_desc.states[key] then
+      debug("states["..key.."] changed to "..new_state)
+      debug("and nixie is "..(nixie_desc.spriteobjs[key]==nil and "nil" or "NOT nill"))
+      nixie_desc.states[key]=new_state
+      updateSprite(nixie_desc,key)
+end
+  end
 end
 
 local function deduceSignalValue(entity)
@@ -129,8 +139,27 @@ end
 
 local function checkForDataMigration(old_data_version, new_data_version)
   -- TODO: when a migration is necessary, trigger it here or set a flag.
-  if old_data_version=="0.1.0" then
-  
+
+  if old_data_version < '0.1.9' then
+    if global.nixie_tubes then
+      for y,row in pairs(global.nixie_tubes.nixies) do
+        for x,nixie in pairs(row) do
+          -- old style has single values
+          -- new style has an array/table of one or more values
+          global.nixie_tubes.nixies[y][x].states = {nixie.state}
+          global.nixie_tubes.nixies[y][x].state = nil
+          global.nixie_tubes.nixies[y][x].entities = {nixie.entity}
+          global.nixie_tubes.nixies[y][x].entity = nil
+          global.nixie_tubes.nixies[y][x].spriteobjs = {nixie.spriteobj}
+          global.nixie_tubes.nixies[y][x].spriteobj = nil
+          global.nixie_tubes.nixies[y][x].size = 1
+        end
+      end
+    end
+  end
+  if old_data_version < '0.2.0' then
+    -- old style has indexes [y][x]
+    -- new style has indexes [s][y][x] and a surface index propery
     local map = global.nixie_tubes.nixies
     local newmap = {}
     for y,v in pairs(map) do
@@ -148,8 +177,8 @@ local function checkForDataMigration(old_data_version, new_data_version)
       end
     end
 
-	 global.nixie_tubes.nixies=newmap
-	 
+    global.nixie_tubes.nixies=newmap
+  
   end
 end
 
@@ -177,19 +206,43 @@ end
 
 local function onPlaceEntity(event)
   local entity=event.created_entity
-  if entity.name=="nixie-tube" then
-    debug("placing")
-    --place the /real/ thing at same spot
+  if entity.name=="nixie-tube" or entity.name=="nixie-tube-small" then
+    local num = (entity.name=="nixie-tube-small") and 2 or 1
     local pos=entity.position
     local surf=entity.surface.index
-    local nixie=entity.surface.create_entity(
+    local desc={
+          size=num,
+          pos=pos,
+          surf=surf,
+          states={},
+          entities={},
+          spriteobjs={},
+       }
+    for n=1, num do
+      debug("placing #"..n)
+      --place the /real/ thing(s) at same spot
+      local name, position
+      if num == 1 then -- large tube, one sprite
+        name = "nixie-tube-sprite"
+        position = {x=pos.x+1/32, y=pos.y+1/32}
+      else 
+        name = "nixie-tube-small-sprite"
+        position = {x=pos.x-4/32+((n-1)*10/32), y=pos.y+4/32}
+      end
+      local nixie=entity.surface.create_entity(
         {
-            name="nixie-tube-sprite",
-            position={x=pos.x+1/32, y=pos.y+1/32},
+              name=name,
+              position=position,
             force=entity.force
         })
-    nixie.orientation=0
-    nixie.insert({name="coal",count=1})
+      nixie.orientation=0
+      nixie.insert({name="coal",count=1})
+      debug("lamp pos = "..pos.x..","..pos.y)
+      debug("car pos = "..nixie.position.x..","..nixie.position.y)
+      desc.states[#desc.states+1]="off"
+      desc.entities[#desc.entities+1]=entity
+      desc.spriteobjs[#desc.spriteobjs+1]=nixie
+    end
     --set me to look up the current entity from the interactive one
     if not nixie_map[entity.surface.index] then
       nixie_map[entity.surface.index]={}
@@ -197,29 +250,20 @@ local function onPlaceEntity(event)
     if not nixie_map[entity.surface.index][entity.position.y] then
       nixie_map[entity.surface.index][entity.position.y]={}
     end
-    debug("lamp pos = "..pos.x..","..pos.y)
-    debug("car pos = "..nixie.position.x..","..nixie.position.y)
-    local desc={
-          pos=pos,
-          surf=surf,
-          state="off",
-          entity=entity,
-          spriteobj=nixie,
-       }
     trace_nixies()
     --enslave guy to left, if there is one
     local neighbor=nixie_map[surf][pos.y][pos.x-1]
-    if neighbor then
+    if neighbor and neighbor.size == desc.size then
       debug("enslaving dude on the left")
       neighbor.slave = true
-      while neighbor do
-        setState(neighbor,"off")
+      while neighbor and neighbor.size == desc.size do
+        setStates(neighbor,(num==1) and {"off"} or {"off","off"})
         neighbor=nixie_map[neighbor.surf][neighbor.pos.y][neighbor.pos.x-1]
       end
     end
     --slave self to right, if any
     neighbor=nixie_map[surf][pos.y][pos.x+1]
-    if neighbor then
+    if neighbor and neighbor.size == desc.size then
       debug("slaving to dude on the right")
       desc.slave=true
     end
@@ -229,24 +273,26 @@ local function onPlaceEntity(event)
 end
 
 local function onRemoveEntity(entity)
-  if entity.name=="nixie-tube" then
+  if entity.valid then
+    if entity.name=="nixie-tube" or entity.name=="nixie-tube-small" then
     local pos=entity.position
     local surf=entity.surface.index
     local nixie_desc=nixie_map[surf][pos.y] and nixie_map[surf][pos.y][pos.x]
     if nixie_desc then
-      removeSpriteObj(nixie_desc)
+        removeSpriteObjs(nixie_desc)
       nixie_map[surf][pos.y][pos.x]=nil
       --if I had a slave, unslave him
       local slave=nixie_map[surf][pos.y][pos.x-1]
-      if slave then
+        if slave and slave.size == nixie_desc.size then
         slave.slave=nil
-        while slave do
-          setState(slave,"off")
+          while slave and slave.size == nixie_desc.size do
+            setStates(slave ,(#slave.states==1) and {"off"} or {"off","off"})
           slave=nixie_map[slave.surf][slave.pos.y][slave.pos.x-1]
         end
       end
     end
   end
+end
 end
 
 local function onTick(event)
@@ -254,62 +300,82 @@ local function onTick(event)
     for s,surf in pairs(nixie_map) do
 	    for y,row in pairs(surf) do
 	      for x,desc in pairs(row) do
-	        if desc.entity.valid then
-	          if desc.entity.energy<70 then
-	            if desc.has_power then
-	              desc.has_power=false
-	              updateSprite(desc)
-	            end
-	          elseif not desc.has_power then
-	            desc.has_power=true
-	            updateSprite(desc)
-	          end
-	          local open=false
-	          for k,v in pairs(game.players) do
-	            if v.opened==desc.entity then
-	              open=true
-	              break
-	            end
-	          end
-	          if not open and not desc.slave then
-	            local v=deduceSignalValue(desc.entity)
-	            local state="off"
-	            if v and desc.has_power then
-	              local minus=v<0
-	              if minus then v=-v end
-	              local d=desc
-	              repeat
-	                local m=v%10
-	                v=(v-m)/10
-	                state = tostring(m)
-	                setState(d,state)
+        for k,entity in pairs(desc.entities) do
+          if entity.valid then
+            if entity.energy<70 then
+              if desc.has_power then
+                desc.has_power=false
+                updateSprites(desc)
+              end
+            elseif not desc.has_power then
+              desc.has_power=true
+              updateSprites(desc)
+            end
+            local open=false
+            for k,v in pairs(game.players) do
+              if v.opened==entity then
+                open=true
+                break
+              end
+            end
+            if not open and not desc.slave then
+              local v=deduceSignalValue(entity)
+              local state="off"
+              if v and desc.has_power then
+                local minus=v<0
+                if minus then v=-v end
+                local d=desc
+                repeat
+                  if #d.states == 1 then
+                    local m=v%10
+                    v=(v-m)/10
+                    state = tostring(m)
+                    setStates(d,{state})
+                  else
+                    local m=v%100 -- two digits for this pair of nixies
+                    v=(v-m)/100 -- remove two digits from what's left
+                    local n=m%10 -- ones digit for this pair
+                    m=(m-n)/10 -- tens digit for this pair
+                    state2 = tostring(n)
+                    if m>0 or v>0 then
+                      state1 = tostring(m)
+                    else
+                      if minus then
+                        state1 = "minus"
+                        minus = nil
+                      else
+                        state1 = "off"
+                      end
+                    end
+                    setStates(d,{state1,state2})
+                  end
+                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
+                until d==nil or v==0 or d.size ~= desc.size
+                if d~=nil and minus and d.size == desc.size then
+                  setStates(d,(#d.states==1) and {"minus"} or {"off","minus"})
+                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
+                end
+                while d and d.size == desc.size do
+                  if d.energy==0 then
+                    break
+                  end
+                  setStates(d,(#d.states==1) and {"off"} or {"off","off"})
 	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
-	              until d==nil or v==0
-	              if d~=nil and minus then
-	                setState(d,"minus")
+                end
+              else
+                local d=desc
+                while d and d.size == desc.size do
+                  setStates(d,(#d.states==1) and {"off"} or {"off","off"})
 	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
-	              end
-	              while d do
-	                if d.energy==0 then
-	                  break
-	                end
-	                setState(d,"off")
-	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
-	              end
-	            else
-	              local d=desc
-	              while d do
-	                setState(d,"off")
-	                d=nixie_map[d.surf][d.pos.y][d.pos.x-1]
-	              end
-	            end
-	          end
-	        else
-	          onRemoveEntity(desc.entity)
-	        end
-	      end
-	    end
-	 end
+                end
+              end
+            end
+          else
+            onRemoveEntity(entity)
+          end
+        end
+      end
+    end
   end
 end
 
@@ -330,7 +396,9 @@ script.on_event(defines.events.on_tick, onTick)
 script.on_event(defines.events.on_player_driving_changed_state,
     function(event)
       local player=game.players[event.player_index]
-      if player.vehicle and player.vehicle.name=="nixie-tube-sprite" then
+      if player.vehicle and 
+        (player.vehicle.name=="nixie-tube-sprite" or 
+          player.vehicle.name=="nixie-tube-small-sprite") then
         player.vehicle.passenger=nil
       end
     end
