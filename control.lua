@@ -93,42 +93,32 @@ end
   end
 end
 
-local function deduceSignalValue(entity)
-  local t=2^31
-  local v=0
-
-  local condition=entity.get_circuit_condition(1)
-  if condition.condition.first_signal.name==nil then
-    --no signal selected, so can't do anything
-    return nil
-  end
-  if condition.condition.comparator=="=" and condition.fulfilled then
-    --we leave the condition set to "= constant" where the constant is the deduced value; if
-    --it's still so set, and still true, we can just return the constant.
-    return condition.condition.constant
-  end
-  condition.condition.comparator="<"
-  while t~=1 do
-    condition.condition.constant=v
-    entity.set_circuit_condition(1,condition)
-    t=t/2
-    if entity.get_circuit_condition(1).fulfilled==true then
-      v=v-t
-    else
-      v=v+t
-    end
-  end
-  condition.condition.constant=v
-  entity.set_circuit_condition(1,condition)
-  if entity.get_circuit_condition(1).fulfilled then
-    --is still true, so value is still 1 less than v
-    v=v-1
-  end
-  --set the state to = v, so we can quickly test out true if it hasn't changed
-  condition.condition.constant=v
-  condition.condition.comparator="="
-  entity.set_circuit_condition(1,condition)
-  return v
+-- from binbinhfr/SmartDisplay
+local function get_signal_value(entity)
+	local behavior = entity.get_control_behavior()
+	if behavior == nil then	return(nil)	end
+	
+	local condition = behavior.circuit_condition
+	if condition == nil then return(nil) end
+	
+	local signal = condition.condition.first_signal
+	
+	if signal == nil or signal.name == nil then return(nil)	end
+	
+	-- debug_print( "cond=("  .. signal.name .. ")" )
+	
+	local network = entity.get_circuit_network(defines.wire_type.red)
+	
+	if network == nil then 
+		network = entity.get_circuit_network(defines.wire_type.green)
+	end
+	
+	if network == nil then return(nil) end
+	
+	local val = network.get_signal(signal)
+	-- debug_print( "val=", val )
+	
+	return(val)
 end
 
 
@@ -336,7 +326,7 @@ local function onTick(event)
               end
             end
             if not open and not desc.slave then
-              local v=deduceSignalValue(entity)
+              local v=get_signal_value(entity)
               local state="off"
               if v and desc.has_power then
                 local minus=v<0
