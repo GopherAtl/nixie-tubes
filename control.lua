@@ -93,7 +93,7 @@ end
   end
 end
 
--- from binbinhfr/SmartDisplay
+-- from binbinhfr/SmartDisplay, modified to check both wires and add them
 local function get_signal_value(entity)
 	local behavior = entity.get_control_behavior()
 	if behavior == nil then	return(nil)	end
@@ -107,15 +107,20 @@ local function get_signal_value(entity)
 	
 	-- debug_print( "cond=("  .. signal.name .. ")" )
 	
-	local network = entity.get_circuit_network(defines.wire_type.red)
+	local redval,greenval=0,0
 	
-	if network == nil then 
-		network = entity.get_circuit_network(defines.wire_type.green)
+	local network = entity.get_circuit_network(defines.wire_type.red)
+	if network then
+	  redval = network.get_signal(signal)
 	end
 	
-	if network == nil then return(nil) end
+	network = entity.get_circuit_network(defines.wire_type.green)
+	if network then
+	  greenval = network.get_signal(signal)
+	end
 	
-	local val = network.get_signal(signal)
+	
+	local val = redval + greenval
 	-- debug_print( "val=", val )
 	
 	return(val)
