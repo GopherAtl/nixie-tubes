@@ -262,10 +262,16 @@ local function onRemoveEntity(entity)
   end
 end
 
+script.on_init(function(data)
+  global.controllers = {}
+  global.states = {}
+  global.spriteobjs = {}
+  global.nextdigit = {}
+end)  
 
 
 script.on_configuration_changed(function(data)
-  if data.mod_changes and data.mod_changes["nixie-tubes"] then
+  if data.mod_changes and data.mod_changes["nixie-tubes"] and global.nixie_tubes then
     global.controllers = {}
     global.states = {}
     global.spriteobjs = {}
