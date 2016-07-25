@@ -47,32 +47,106 @@ data:extend(
     {
       filename = "__nixie-tubes__/graphics/nixie-base.png",
       priority = "high",
-      width = 48,
-      height = 72,
-      shift = {7/32,-5/32}
+      width = 40,
+      height = 64,
+      shift = {0,0}
     },
     picture_on =
     {
-      filename = "__nixie-tubes__/graphics/nixie-base.png",
+      filename = "__nixie-tubes__/graphics/empty.png",
       priority = "high",
-      width = 48,
-      height = 72,
-      shift = {7/32,-5/32}
+      width = 1,
+      height = 1,
+      shift = {0,0}
     },
     circuit_wire_connection_point =
     {
       shadow =
       {
-        red = {26/32, -23/32},
-        green = {26/32, -23/32},
+        red = {22.5/32, 23.5/32},
+        green = {18.5/32, 28.5/32},
       },
       wire =
       {
-        red = {12/32, -41/32},
-        green = {12/32, -41/32},
+        red = {12/32, 23/32},
+        green = {12/32, 28/32},
       }
     },
-
+    circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
+    circuit_wire_max_distance = 7.5
+  },
+  
+  -- 2x1 tile one-charater alpha nixie tube
+  {
+    type = "recipe",
+    name = "nixie-tube-alpha",
+    enabled = "false",
+    ingredients =
+    {
+      {"electronic-circuit",1},
+      {"iron-plate",2},
+      {"iron-stick", 10},
+    },
+    result = "nixie-tube-alpha"
+  },
+  {
+    type = "item",
+    name = "nixie-tube-alpha",
+    icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
+    flags = {"goes-to-quickbar"},
+    subgroup = "circuit-network",
+    order = "c-a",
+    place_result = "nixie-tube-alpha",
+    stack_size = 50
+  },
+  {
+    type = "lamp",
+    name = "nixie-tube-alpha",
+    icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
+    flags = {"placeable-neutral","player-creation", "not-on-map"},
+    minable = {hardness = 0.2, mining_time = 0.5, result = "nixie-tube-alpha"},
+    max_health = 55,
+    order = "z[zebra]",
+    corpse = "small-remnants",
+    collision_box = {{-0.4, -0.9}, {0.4, .9}},
+    selection_box = {{-.5, -1.0}, {0.5, 1.0}},
+    energy_source =
+    {
+      type = "electric",
+      usage_priority = "secondary-input",
+    },
+    energy_usage_per_tick = "4KW",
+    light = {intensity = 0.0, size = 0, color = {r=1, g=.6, b=.3, a=0}},
+    picture_off =
+    {
+      filename = "__nixie-tubes__/graphics/nixie-base.png",
+      priority = "high",
+      width = 40,
+      height = 64,
+      shift = {0,0}
+    },
+    picture_on =
+    {
+      filename = "__nixie-tubes__/graphics/empty.png",
+      priority = "high",
+      width = 1,
+      height = 1,
+      shift = {0,0}
+    },
+    circuit_wire_connection_point =
+    {
+      shadow =
+      {
+        red = {22.5/32, 23.5/32},
+        green = {18.5/32, 28.5/32},
+      },
+      wire =
+      {
+        red = {12/32, 23/32},
+        green = {12/32, 28/32},
+      }
+    },
+    circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
     circuit_wire_max_distance = 7.5
   },
 
@@ -165,19 +239,36 @@ data:extend(
           width = 20,
           height = 44,
           frame_count = 1,
-          direction_count = 12,
-          shift = {-2/32,-8/32},
+          direction_count = 40,
+          shift = {-5/32,-7/32},
           animation_speed = 0.1,
           max_advance = 0.2,
           stripes =
           {
             {
              filename = "__nixie-tubes__/graphics/nixie-digits.png",
-             width_in_frames = 1,
-             height_in_frames = 12,
+             width_in_frames = 10,
+             height_in_frames = 4,
             },
           }
         },
+        {
+          width = 20,
+          height = 44,
+          frame_count = 1,
+          direction_count = 40,
+          apply_runtime_tint = true,
+          max_advance = 0.2,
+          shift = {-5/32,-7/32},
+          stripes =
+          {
+            {
+             filename = "__nixie-tubes__/graphics/nixie-digits-mono.png",
+             width_in_frames = 10,
+             height_in_frames = 4,
+            },
+          }
+        }
       }
     },
     stop_trigger_speed = 0.2,
