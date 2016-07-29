@@ -1,9 +1,11 @@
 require "config"
 
+-- luacheck: globals refresh_rate global game defines script
+
 local ticksPerRefresh = math.ceil(60 / refresh_rate)
 
 local function removeSpriteObjs(nixie)
-  for k,obj in pairs(global.spriteobjs[nixie.unit_number]) do
+  for _,obj in pairs(global.spriteobjs[nixie.unit_number]) do
     if obj.valid then
       if obj.passenger then
         obj.passenger.destroy()
@@ -60,7 +62,7 @@ local stateOrientMap = {
   ["dot"]=bigstep*36,
   ["minus"]=bigstep*37,
   ["off"]=bigstep*38,
-  
+
   },
   { -- state map for small nixies
   ["off"]=smallstep*0,
@@ -128,7 +130,7 @@ local signalColorMap = {
   ["signal-cyan"]={r=0,g=1,b=1,a=0.3},
 }
 
---sets the state(s) and update the sprite for a nixie 
+--sets the state(s) and update the sprite for a nixie
 local function setStates(nixie,newstates,color)
   for key,new_state in pairs(newstates) do
     local obj = global.spriteobjs[nixie.unit_number][key]
@@ -138,7 +140,7 @@ local function setStates(nixie,newstates,color)
         if color and new_state ~= "off" then
           -- create and color a passenger
           if not obj.passenger then
-            obj.passenger = obj.surface.create_entity{name="player", position=obj.position,force=obj.force} 
+            obj.passenger = obj.surface.create_entity{name="player", position=obj.position,force=obj.force}
           end
           obj.passenger.color=color
         else
@@ -160,27 +162,27 @@ end
 local function get_signal_value(entity)
 	local behavior = entity.get_control_behavior()
 	if behavior == nil then	return(nil)	end
-	
+
 	local condition = behavior.circuit_condition
 	if condition == nil then return(nil) end
-	
+
 	local signal = condition.condition.first_signal
-	
+
 	if signal == nil or signal.name == nil then return(nil)	end
-	
+
 	local redval,greenval=0,0
-	
+
 	local network = entity.get_circuit_network(defines.wire_type.red)
 	if network then
 	  redval = network.get_signal(signal)
 	end
-	
+
 	network = entity.get_circuit_network(defines.wire_type.green)
 	if network then
 	  greenval = network.get_signal(signal)
 	end
-	
-	
+
+
 	local val = redval + greenval
 
 	return(val)
@@ -194,28 +196,34 @@ local function searchbox(nixie,direction)
     }
 end
 
+local validEntityName = {
+  ['nixie-tube']       = 1,
+  ['nixie-tube-alpha'] = 1,
+  ['nixie-tube-small'] = 2
+}
 
 local function onPlaceEntity(event)
-  
+
   local entity=event.created_entity
   if not entity.valid then return end
-  if entity.name=="nixie-tube" or entity.name=="nixie-tube-alpha" or entity.name=="nixie-tube-small" then
-    local num = (entity.name=="nixie-tube-small") and 2 or 1
+
+  local num = validEntityName[entity.name]
+  if num then
     local pos=entity.position
     local surf=entity.surface
-    
-    global.spriteobjs[entity.unit_number]={}
+
+    local sprites = {}
     for n=1, num do
       --place the /real/ thing(s) at same spot
       local name, position
       if num == 1 then -- large tube, one sprite
         name = "nixie-tube-sprite"
         position = {x=pos.x+1/32, y=pos.y+1/32}
-      else 
+      else
         name = "nixie-tube-small-sprite"
         position = {x=pos.x-4/32+((n-1)*10/32), y=pos.y+4/32}
       end
-      local sprite=entity.surface.create_entity(
+      local sprite=surf.create_entity(
         {
               name=name,
               position=position,
@@ -223,23 +231,25 @@ local function onPlaceEntity(event)
         })
       sprite.orientation=0
       sprite.insert({name="coal",count=1})
-      global.spriteobjs[entity.unit_number][n]=sprite
+      sprites[n]=sprite
     end
+    global.spriteobjs[entity.unit_number] = sprites
+
     if entity.name == "nixie-tube-alpha" then
       global.alphas[entity.unit_number] = entity
     else
       --enslave guy to left, if there is one
-      local neighbors=entity.surface.find_entities_filtered{area=searchbox(entity,"left"),name=entity.name}
+      local neighbors=surf.find_entities_filtered{area=searchbox(entity,"left"),name=entity.name}
       for _,n in pairs(neighbors) do
         if n.valid then
           global.controllers[n.unit_number] = nil
           global.nextdigit[entity.unit_number] = n
-        end 
+        end
       end
-      
-  
+
+
       --slave self to right, if any
-      local neighbors=entity.surface.find_entities_filtered{area=searchbox(entity,"right"),name=entity.name}
+      neighbors=surf.find_entities_filtered{area=searchbox(entity,"right"),name=entity.name}
       local foundright=false
       for _,n in pairs(neighbors) do
         if n.valid then
@@ -256,50 +266,51 @@ end
 
 local function displayBlank(entity)
   local nextdigit = global.nextdigit[entity.unit_number]
-  
+
   setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"off"} or {"off","off"})
-  if nextdigit and nextdigit.valid then 
+  if nextdigit and nextdigit.valid then
     displayBlank(nextdigit)
   end
 end
 
 local function displayMinus(entity)
   local nextdigit = global.nextdigit[entity.unit_number]
-  
+
   setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"minus"} or {"off","minus"})
-  if nextdigit and nextdigit.valid then 
+  if nextdigit and nextdigit.valid then
     displayBlank(nextdigit)
   end
-end 
+end
 
 
 local function displayValue(entity,v)
   local minus=v<0
   if minus then v=-v end
   local nextdigit = global.nextdigit[entity.unit_number]
-  
+
   if #global.spriteobjs[entity.unit_number] == 1 then
     local m=v%10
     v=(v-m)/10
-    state = tostring(m)
+    local state = tostring(m)
     setStates(entity,{state})
-    if nextdigit and nextdigit.valid then 
-      if v == 0 and minus then 
+    if nextdigit and nextdigit.valid then
+      if v == 0 and minus then
         displayMinus(nextdigit)
       elseif minus then
         displayValue(nextdigit,-v)
       elseif v == 0 then
         displayBlank(nextdigit)
-      else  
+      else
         displayValue(nextdigit,v)
       end
-    end  
+    end
   else
     local m=v%100 -- two digits for this pair of nixies
     v=(v-m)/100 -- remove two digits from what's left
     local n=m%10 -- ones digit for this pair
     m=(m-n)/10 -- tens digit for this pair
-    state2 = tostring(n)
+    local state1
+    local state2 = tostring(n)
     if m>0 or v>0 then
       state1 = tostring(m)
     elseif minus then
@@ -309,50 +320,50 @@ local function displayValue(entity,v)
       state1 = "off"
     end
     setStates(entity,{state1,state2})
-    
-    if nextdigit and nextdigit.valid then 
-      if v == 0 and minus then 
+
+    if nextdigit and nextdigit.valid then
+      if v == 0 and minus then
         displayMinus(nextdigit)
       elseif minus then
         displayValue(nextdigit,-v)
       elseif v == 0 then
         displayBlank(nextdigit)
-      else  
+      else
         displayValue(nextdigit,v)
       end
     end
   end
-end  
+end
 
-local function onTickController(entity) 
+local function onTickController(entity)
   if not entity.valid then
     onRemoveEntity(entity)
     return
   end
-  
-  local open=false
-  for k,v in pairs(game.players) do
+
+  -- local open=false
+  for _,v in pairs(game.players) do
     if v.opened==entity then return end
   end
-  
+
   local v=get_signal_value(entity)
-  if v then 
+  if v then
     displayValue(entity,v)
   else
     displayBlank(entity)
   end
-end 
+end
 
 
 local function getAlphaSignals(entity,wire_type,charsig,colorsig)
-  local net = entity.get_circuit_network(wire_type) 
-  
+  local net = entity.get_circuit_network(wire_type)
+
   local ch,co = charsig,colorsig
-  
-  if net then 
+
+  if net then
     for _,s in pairs(net.signals) do
       if signalCharMap[s.signal.name] then
-        if ch then 
+        if ch then
           ch = "err"
         else
           ch = signalCharMap[s.signal.name]
@@ -363,26 +374,26 @@ local function getAlphaSignals(entity,wire_type,charsig,colorsig)
       end
     end
   end
-  
+
   return ch,co
 end
 
 local function onTickAlpha(entity)
   if not entity then return end
-  
+
   if not entity.valid then
     onRemoveEntity(entity)
     return
   end
-  
-  local open=false
-  for k,v in pairs(game.players) do
+
+  --local open=false
+  for _,v in pairs(game.players) do
     if v.opened==entity then return end
   end
-  
+
   local charsig,colorsig = nil,nil
-  
-  charsig,colorsig=getAlphaSignals(entity,defines.wire_type.red,charsig,colorsig) 
+
+  charsig,colorsig=getAlphaSignals(entity,defines.wire_type.red,charsig,colorsig)
   charsig,colorsig=getAlphaSignals(entity,defines.wire_type.green,charsig,colorsig)
   charsig = charsig or "off"
   setStates(entity,{charsig},colorsig)
@@ -392,12 +403,12 @@ end
 local function onTick(event)
   if event.tick%ticksPerRefresh == 0 then
     for _,nixie in pairs(global.controllers) do
-      onTickController(nixie) 
+      onTickController(nixie)
     end
-  end
-  if event.tick%ticksPerRefresh == 0 then
+  -- end
+  -- if event.tick%ticksPerRefresh == 0 then
     for _,nixie in pairs(global.alphas) do
-      onTickAlpha(nixie) 
+      onTickAlpha(nixie)
     end
   end
 end
@@ -405,7 +416,7 @@ end
 
 local function onRemoveEntity(entity)
   if entity.valid then
-    if entity.name=="nixie-tube" or entity.name=="nixie-tube-alpha" or entity.name=="nixie-tube-small" then
+    if validEntityName[entity.name] then
       removeSpriteObjs(entity)
       --if I was a controller, deregister
       global.controllers[entity.unit_number]=nil
@@ -421,12 +432,12 @@ local function onRemoveEntity(entity)
   end
 end
 
-script.on_init(function(data)
+script.on_init(function()
   global.alphas = {}
   global.controllers = {}
   global.spriteobjs = {}
   global.nextdigit = {}
-end)  
+end)
 
 
 script.on_configuration_changed(function(data)
@@ -442,7 +453,7 @@ script.on_configuration_changed(function(data)
             if desc.entities[1] and desc.entities[1].valid then
               for _,s in pairs(desc.spriteobjs) do if s.valid then s.clear_items_inside() s.destroy() end end
               onPlaceEntity({created_entity=desc.entities[1]})
-            end  
+            end
           end
         end
       end
@@ -463,8 +474,8 @@ script.on_event(defines.events.on_tick, onTick)
 script.on_event(defines.events.on_player_driving_changed_state,
     function(event)
       local player=game.players[event.player_index]
-      if player.vehicle and 
-        (player.vehicle.name=="nixie-tube-sprite" or 
+      if player.vehicle and
+        (player.vehicle.name=="nixie-tube-sprite" or
           player.vehicle.name=="nixie-tube-small-sprite") then
         player.vehicle.passenger=nil
       end
