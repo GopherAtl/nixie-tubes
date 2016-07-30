@@ -202,33 +202,18 @@ data:extend(
     {
       {
         type = "oriented",
-        minimum_darkness = 0.3,
+        minimum_darkness = 1,
         picture =
         {
           filename = "__core__/graphics/light-cone.png",
           priority = "medium",
-          scale = 2,
-          width = 200,
-          height = 200
+          scale = 0,
+          width = 0,
+          height = 0
         },
-        shift = {-0.6, -14},
+        shift = {0, 0},
         size = 2,
-        intensity = 0.6
-      },
-      {
-        type = "oriented",
-        minimum_darkness = 0.3,
-        picture =
-        {
-          filename = "__core__/graphics/light-cone.png",
-          priority = "medium",
-          scale = 2,
-          width = 200,
-          height = 200
-        },
-        shift = {0.6, -14},
-        size = 2,
-        intensity = 0.6
+        intensity = 0
       }
     },
     animation =
@@ -280,38 +265,38 @@ data:extend(
         {
           {
             filename = "__base__/sound/car-breaks.ogg",
-            volume = 0.6
+            volume = 0
           },
         }
       },
     },
-    sound_minimum_speed = 0.2;
-    vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65 },
+    sound_minimum_speed = 0;
+    vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0 },
     working_sound =
     {
       sound =
       {
         filename = "__base__/sound/car-engine.ogg",
-        volume = 0.6
+        volume = 0
       },
       activate_sound =
       {
         filename = "__base__/sound/car-engine-start.ogg",
-        volume = 0.6
+        volume = 0
       },
       deactivate_sound =
       {
         filename = "__base__/sound/car-engine-stop.ogg",
-        volume = 0.6
+        volume = 0
       },
       match_speed_to_activity = true,
     },
-    open_sound = { filename = "__base__/sound/car-door-open.ogg", volume=0.7 },
-    close_sound = { filename = "__base__/sound/car-door-close.ogg", volume = 0.7 },
+    open_sound = { filename = "__base__/sound/car-door-open.ogg", volume=0 },
+    close_sound = { filename = "__base__/sound/car-door-close.ogg", volume = 0 },
     rotation_speed = 0.015,
     weight = 700,
     guns = { "vehicle-machine-gun" },
-    inventory_size = 80
+    inventory_size = 0
   },
 
 
@@ -442,33 +427,18 @@ data:extend(
     {
       {
         type = "oriented",
-        minimum_darkness = 0.3,
+        minimum_darkness = 1,
         picture =
         {
           filename = "__core__/graphics/light-cone.png",
           priority = "medium",
-          scale = 2,
-          width = 200,
-          height = 200
+          scale = 0,
+          width = 0,
+          height = 0
         },
-        shift = {-0.6, -14},
-        size = 2,
-        intensity = 0.6
-      },
-      {
-        type = "oriented",
-        minimum_darkness = 0.3,
-        picture =
-        {
-          filename = "__core__/graphics/light-cone.png",
-          priority = "medium",
-          scale = 2,
-          width = 200,
-          height = 200
-        },
-        shift = {0.6, -14},
-        size = 2,
-        intensity = 0.6
+        shift = {0, 0},
+        size = 0,
+        intensity = 0
       }
     },
     animation =
@@ -503,29 +473,29 @@ data:extend(
         {
           {
             filename = "__base__/sound/car-breaks.ogg",
-            volume = 0.6
+            volume = 0
           },
         }
       },
     },
-    sound_minimum_speed = 0.2;
-    vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65 },
+    sound_minimum_speed = 0;
+    vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0 },
     working_sound =
     {
       sound =
       {
         filename = "__base__/sound/car-engine.ogg",
-        volume = 0.6
+        volume = 0
       },
       activate_sound =
       {
         filename = "__base__/sound/car-engine-start.ogg",
-        volume = 0.6
+        volume = 0
       },
       deactivate_sound =
       {
         filename = "__base__/sound/car-engine-stop.ogg",
-        volume = 0.6
+        volume = 0
       },
       match_speed_to_activity = true,
     },
@@ -534,7 +504,7 @@ data:extend(
     rotation_speed = 0.015,
     weight = 700,
     guns = { "vehicle-machine-gun" },
-    inventory_size = 80
+    inventory_size = 0
   },
 
 
