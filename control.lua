@@ -122,12 +122,13 @@ local signalCharMap = {
 }
 
 local signalColorMap = {
-  ["signal-red"]={r=1,g=0,b=0,a=0.3},
-  ["signal-green"]={r=0,g=1,b=0,a=0.3},
-  ["signal-blue"]={r=0,g=0,b=1,a=0.3},
-  ["signal-yellow"]={r=1,g=1,b=0,a=0.3},
-  ["signal-pink"]={r=1,g=0,b=1,a=0.3},
-  ["signal-cyan"]={r=0,g=1,b=1,a=0.3},
+  ["default"]       = {r=1.0,  g=0.6,  b=0.2, a=1}, -- pretty close to original-orange
+  ["signal-red"]    = {r=1.0,  g=0.0,  b=0.0, a=1},
+  ["signal-green"]  = {r=0.0,  g=1.0,  b=0.0, a=1},
+  ["signal-blue"]   = {r=0.4,  g=0.4,  b=1.0, a=1}, -- pure blue is too dark, so brighten it up just a little bit
+  ["signal-yellow"] = {r=1.0,  g=1.0,  b=0.0, a=1},
+  ["signal-pink"]   = {r=1.0,  g=0.0,  b=1.0, a=1},
+  ["signal-cyan"]   = {r=0.0,  g=1.0,  b=1.0, a=1},
 }
 
 --sets the state(s) and update the sprite for a nixie
@@ -137,18 +138,13 @@ local function setStates(nixie,newstates,color)
     if obj and obj.valid then
       if nixie.energy > 70 then
         obj.orientation=stateOrientMap[#newstates][new_state]
-        if color and new_state ~= "off" then
-          -- create and color a passenger
-          if not obj.passenger then
-            obj.passenger = obj.surface.create_entity{name="player", position=obj.position,force=obj.force}
-          end
-          obj.passenger.color=color
-        else
-          -- destroy the passenger to get basic-orange
-          if obj.passenger then
-            obj.passenger.destroy()
-          end
+        if not color then color=signalColorMap["default"] end
+        
+        -- create and color a passenger
+        if not obj.passenger then
+          obj.passenger = obj.surface.create_entity{name="player", position=obj.position,force=obj.force}
         end
+        obj.passenger.color=color
       else
         obj.orientation=stateOrientMap[#newstates]["off"]
       end

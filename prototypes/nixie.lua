@@ -225,23 +225,6 @@ data:extend(
           height = 44,
           frame_count = 1,
           direction_count = 40,
-          shift = {-5/32,-7/32},
-          animation_speed = 0.1,
-          max_advance = 0.2,
-          stripes =
-          {
-            {
-             filename = "__nixie-tubes__/graphics/nixie-digits.png",
-             width_in_frames = 10,
-             height_in_frames = 4,
-            },
-          }
-        },
-        {
-          width = 20,
-          height = 44,
-          frame_count = 1,
-          direction_count = 40,
           apply_runtime_tint = true,
           max_advance = 0.2,
           shift = {-5/32,-7/32},
