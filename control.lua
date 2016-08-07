@@ -270,17 +270,17 @@ local function displayBlank(entity)
   end
 end
 
-local function displayMinus(entity)
+local function displayMinus(entity,color)
   local nextdigit = global.nextdigit[entity.unit_number]
 
-  setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"minus"} or {"off","minus"})
+  setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"minus"} or {"off","minus"},color)
   if nextdigit and nextdigit.valid then
     displayBlank(nextdigit)
   end
 end
 
 
-local function displayValue(entity,v)
+local function displayValue(entity,v,color)
   local minus=v<0
   if minus then v=-v end
   local nextdigit = global.nextdigit[entity.unit_number]
@@ -289,16 +289,16 @@ local function displayValue(entity,v)
     local m=v%10
     v=(v-m)/10
     local state = tostring(m)
-    setStates(entity,{state})
+    setStates(entity,{state},color)
     if nextdigit and nextdigit.valid then
       if v == 0 and minus then
-        displayMinus(nextdigit)
+        displayMinus(nextdigit,color)
       elseif minus then
-        displayValue(nextdigit,-v)
+        displayValue(nextdigit,-v,color)
       elseif v == 0 then
         displayBlank(nextdigit)
       else
-        displayValue(nextdigit,v)
+        displayValue(nextdigit,v,color)
       end
     end
   else
@@ -316,41 +316,21 @@ local function displayValue(entity,v)
     else
       state1 = "off"
     end
-    setStates(entity,{state1,state2})
+    setStates(entity,{state1,state2},color)
 
     if nextdigit and nextdigit.valid then
       if v == 0 and minus then
-        displayMinus(nextdigit)
+        displayMinus(nextdigit,color)
       elseif minus then
-        displayValue(nextdigit,-v)
+        displayValue(nextdigit,-v,color)
       elseif v == 0 then
         displayBlank(nextdigit)
       else
-        displayValue(nextdigit,v)
+        displayValue(nextdigit,v,color)
       end
     end
   end
 end
-
-local function onTickController(entity)
-  if not entity.valid then
-    onRemoveEntity(entity)
-    return
-  end
-
-  -- local open=false
-  for _,v in pairs(game.players) do
-    if v.opened==entity then return end
-  end
-
-  local v=get_signal_value(entity)
-  if v then
-    displayValue(entity,v)
-  else
-    displayBlank(entity)
-  end
-end
-
 
 local function getAlphaSignals(entity,wire_type,charsig,colorsig)
   local net = entity.get_circuit_network(wire_type)
@@ -366,13 +346,39 @@ local function getAlphaSignals(entity,wire_type,charsig,colorsig)
           ch = signalCharMap[s.signal.name]
         end
       end
-      if entity.get_or_create_control_behavior().use_colors and signalColorMap[s.signal.name] then
+      if signalColorMap[s.signal.name] then
         co = signalColorMap[s.signal.name]
       end
     end
   end
 
   return ch,co
+end
+
+
+local function onTickController(entity)
+  if not entity.valid then
+    onRemoveEntity(entity)
+    return
+  end
+
+  -- local open=false
+  for _,v in pairs(game.players) do
+    if v.opened==entity then return end
+  end
+  
+  local _,color = nil,nil
+  if entity.get_or_create_control_behavior().use_colors then
+     _,color=getAlphaSignals(entity,defines.wire_type.red,_,color)
+     _,color=getAlphaSignals(entity,defines.wire_type.green,_,color)
+  end
+  
+  local v=get_signal_value(entity)
+  if v then
+    displayValue(entity,v,color)
+  else
+    displayBlank(entity)
+  end
 end
 
 local function onTickAlpha(entity)
@@ -388,12 +394,15 @@ local function onTickAlpha(entity)
     if v.opened==entity then return end
   end
 
-  local charsig,colorsig = nil,nil
+  local charsig,color = nil,nil
 
-  charsig,colorsig=getAlphaSignals(entity,defines.wire_type.red,charsig,colorsig)
-  charsig,colorsig=getAlphaSignals(entity,defines.wire_type.green,charsig,colorsig)
+  charsig,color=getAlphaSignals(entity,defines.wire_type.red,  charsig,color)
+  charsig,color=getAlphaSignals(entity,defines.wire_type.green,charsig,color)
   charsig = charsig or "off"
-  setStates(entity,{charsig},colorsig)
+  
+  if entity.get_or_create_control_behavior().use_colors then color=nil end
+  
+  setStates(entity,{charsig},color)
 end
 
 
