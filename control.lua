@@ -122,12 +122,13 @@ local signalCharMap = {
 }
 
 local signalColorMap = {
+  ["off"]           = {r=1.0,  g=1.0,  b=1.0, a=1}, -- off state, no glow
   ["default"]       = {r=1.0,  g=0.6,  b=0.2, a=1}, -- pretty close to original-orange
-  ["signal-red"]    = {r=1.0,  g=0.0,  b=0.0, a=1},
-  ["signal-green"]  = {r=0.0,  g=1.0,  b=0.0, a=1},
-  ["signal-blue"]   = {r=0.4,  g=0.4,  b=1.0, a=1}, -- pure blue is too dark, so brighten it up just a little bit
-  ["signal-yellow"] = {r=1.0,  g=1.0,  b=0.0, a=1},
-  ["signal-pink"]   = {r=1.0,  g=0.0,  b=1.0, a=1},
+  ["signal-red"]    = {r=1.0,  g=0.2,  b=0.2, a=1},
+  ["signal-green"]  = {r=0.2,  g=1.0,  b=0.2, a=1},
+  ["signal-blue"]   = {r=0.6,  g=0.6,  b=1.0, a=1}, -- pure blue is too dark, so brighten it up just a little bit
+  ["signal-yellow"] = {r=1.0,  g=1.0,  b=0.2, a=1},
+  ["signal-pink"]   = {r=1.0,  g=0.4,  b=1.0, a=1},
   ["signal-cyan"]   = {r=0.0,  g=1.0,  b=1.0, a=1},
 }
 
@@ -139,7 +140,7 @@ local function setStates(nixie,newstates,color)
       if nixie.energy > 70 then
         obj.orientation=stateOrientMap[#newstates][new_state]
         if not color then color=signalColorMap["default"] end
-        
+        if new_state == "off" then color=signalColorMap["off"] end
         -- create and color a passenger
         if not obj.passenger then
           obj.passenger = obj.surface.create_entity{name="player", position=obj.position,force=obj.force}
@@ -365,7 +366,7 @@ local function getAlphaSignals(entity,wire_type,charsig,colorsig)
           ch = signalCharMap[s.signal.name]
         end
       end
-      if signalColorMap[s.signal.name] then
+      if entity.get_or_create_control_behavior().use_colors and signalColorMap[s.signal.name] then
         co = signalColorMap[s.signal.name]
       end
     end
