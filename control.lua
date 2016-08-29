@@ -2,6 +2,16 @@
 
 local alphasPerTick = 10
 
+local function removeSpriteObj(obj)
+  if obj.valid then
+    if obj.passenger then
+      obj.passenger.destroy()
+    end
+    obj.clear_items_inside()
+    obj.destroy()
+  end
+end
+
 local function removeSpriteObjs(nixie)
   for _,obj in pairs(global.spriteobjs[nixie.unit_number]) do
     if obj.valid then
@@ -198,72 +208,6 @@ local validEntityName = {
   ['nixie-tube-small'] = 2
 }
 
-local function onPlaceEntity(event)
-
-  local entity=event.created_entity
-  if not entity.valid then return end
-
-  local num = validEntityName[entity.name]
-  if num then
-    local pos=entity.position
-    local surf=entity.surface
-
-    local sprites = {}
-    for n=1, num do
-      --place the /real/ thing(s) at same spot
-      local name, position
-      if num == 1 then -- large tube, one sprite
-        name = "nixie-tube-sprite"
-        position = {x=pos.x+1/32, y=pos.y+1/32}
-      else
-        name = "nixie-tube-small-sprite"
-        position = {x=pos.x-4/32+((n-1)*10/32), y=pos.y+4/32}
-      end
-      local sprite=surf.create_entity(
-        {
-              name=name,
-              position=position,
-            force=entity.force
-        })
-      sprite.orientation=0
-      sprite.insert({name="coal",count=1})
-      sprites[n]=sprite
-    end
-    global.spriteobjs[entity.unit_number] = sprites
-
-    if entity.name == "nixie-tube-alpha" then
-      global.alphas[entity.unit_number] = entity
-    else
-      --enslave guy to left, if there is one
-      local neighbors=surf.find_entities_filtered{
-        position={x=entity.position.x-1,y=entity.position.y},
-        name=entity.name}
-      for _,n in pairs(neighbors) do
-        if n.valid then
-          global.controllers[n.unit_number] = nil
-          global.nextdigit[entity.unit_number] = n
-        end
-      end
-
-
-      --slave self to right, if any
-      neighbors=surf.find_entities_filtered{
-        position={x=entity.position.x+1,y=entity.position.y},
-        name=entity.name}
-      local foundright=false
-      for _,n in pairs(neighbors) do
-        if n.valid then
-          foundright=true
-          global.nextdigit[n.unit_number]=entity
-        end
-      end
-      if not foundright then
-        global.controllers[entity.unit_number] = entity
-      end
-    end
-  end
-end
-
 local function displayBlank(entity)
   local nextdigit = global.nextdigit[entity.unit_number]
 
@@ -281,7 +225,6 @@ local function displayMinus(entity,color)
     displayBlank(nextdigit)
   end
 end
-
 
 local function displayValue(entity,v,color)
   local minus=v<0
@@ -395,7 +338,7 @@ local function onTickAlpha(entity)
   charsig,color=getAlphaSignals(entity,defines.wire_type.green,charsig,color)
   charsig = charsig or "off"
 
-  if entity.get_or_create_control_behavior().use_colors then color=nil end
+  if not entity.get_or_create_control_behavior().use_colors then color=nil end
 
   setStates(entity,{charsig},color)
 end
@@ -416,6 +359,72 @@ local function onTick(event)
   end
 end
 
+local function onPlaceEntity(event)
+
+  local entity=event.created_entity
+  if not entity.valid then return end
+
+  local num = validEntityName[entity.name]
+  if num then
+    local pos=entity.position
+    local surf=entity.surface
+
+    local sprites = {}
+    for n=1, num do
+      --place the /real/ thing(s) at same spot
+      local name, position
+      if num == 1 then -- large tube, one sprite
+        name = "nixie-tube-sprite"
+        position = {x=pos.x+1/32, y=pos.y+1/32}
+      else
+        name = "nixie-tube-small-sprite"
+        position = {x=pos.x-4/32+((n-1)*10/32), y=pos.y+4/32}
+      end
+      local sprite=surf.create_entity(
+        {
+              name=name,
+              position=position,
+            force=entity.force
+        })
+      sprite.orientation=0
+      sprite.insert({name="coal",count=1})
+      sprites[n]=sprite
+    end
+    global.spriteobjs[entity.unit_number] = sprites
+
+    if entity.name == "nixie-tube-alpha" then
+      global.alphas[entity.unit_number] = entity
+    else
+      --enslave guy to left, if there is one
+      local neighbors=surf.find_entities_filtered{
+        position={x=entity.position.x-1,y=entity.position.y},
+        name=entity.name}
+      for _,n in pairs(neighbors) do
+        if n.valid then
+          global.controllers[n.unit_number] = nil
+          global.nextdigit[entity.unit_number] = n
+        end
+      end
+
+
+      --slave self to right, if any
+      neighbors=surf.find_entities_filtered{
+        position={x=entity.position.x+1,y=entity.position.y},
+        name=entity.name}
+      local foundright=false
+      for _,n in pairs(neighbors) do
+        if n.valid then
+          foundright=true
+          global.nextdigit[n.unit_number]=entity
+        end
+      end
+      if not foundright then
+        global.controllers[entity.unit_number] = entity
+        setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"0"} or {"off","0"})
+      end
+    end
+  end
+end
 
 local function onRemoveEntity(entity)
   if entity.valid then
@@ -445,22 +454,31 @@ end)
 
 script.on_configuration_changed(function(data)
   if data.mod_changes and data.mod_changes["nixie-tubes"] then
-    if not global.alphas then global.alphas = {} end
-    if global.nixie_tubes then
-      global.controllers = {}
-      global.spriteobjs = {}
-      global.nextdigit = {}
-      for _,surf in pairs(global.nixie_tubes.nixies) do
-        for _,row in pairs(surf) do
-          for _,desc in pairs(row) do
-            if desc.entities[1] and desc.entities[1].valid then
-              for _,s in pairs(desc.spriteobjs) do if s.valid then s.clear_items_inside() s.destroy() end end
-              onPlaceEntity({created_entity=desc.entities[1]})
-            end
-          end
-        end
+    --If my data has changed, rebuild all my tables. There are so many old formats, there's no other sensible way to upgrade.
+
+    -- remove ancient config if it's still here
+    if global.nixie_tubes then global.nixie_tubes = nil end
+
+    -- clear the tables
+    global.alphas = {}
+    global.controllers = {}
+    global.spriteobjs = {}
+    global.nextdigit = {}
+
+    -- and re-index the world
+    for _,surf in pairs(game.surfaces) do
+      -- Destroy old sprite objects
+      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-sprite"}) do
+        removeSpriteObj(sprite)
       end
-      global.nixie_tubes = nil
+      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-small-sprite"}) do
+        removeSpriteObj(sprite)
+      end
+
+      -- And re-index all nixies. non-nixie lamps will be ignored by onPlaceEntity
+      for _,lamp in pairs(surf.find_entities_filtered{type="lamp"}) do
+        onPlaceEntity({created_entity=lamp})
+      end
     end
   end
 end)
