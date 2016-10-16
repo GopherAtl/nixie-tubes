@@ -331,7 +331,7 @@ data:extend(
       priority = "high",
       width = 48,
       height = 42,
-      shift = {7/32,-5/32}
+      shift = {4/32,-5/32}
     },
     picture_on =
     {
@@ -339,7 +339,7 @@ data:extend(
       priority = "high",
       width = 48,
       height = 42,
-      shift = {7/32,-5/32}
+      shift = {4/32,-5/32}
     },
     circuit_wire_connection_point =
     {
@@ -433,7 +433,7 @@ data:extend(
           height = 22,
           frame_count = 1,
           direction_count = 12,
-          shift = {-2/32,-8/32},
+          shift = {-5/32,-8/32},
           animation_speed = 0.1,
           max_advance = 0.2,
           stripes =
