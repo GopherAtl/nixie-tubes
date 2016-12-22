@@ -19,6 +19,10 @@ data:extend({
       },
       {
         type = "unlock-recipe",
+        recipe = "nixie-tube-alpha",
+      },
+      {
+        type = "unlock-recipe",
         recipe = "nixie-tube-small",
       },
     },
