@@ -5,5 +5,5 @@
   "title": "Nixie Tubes",
   "author": "GopherAtl, justarandomgeek",
   "description": "Adds nixie tubes, for displaying values from a connected circuit network.",
-  "dependencies": ["base >= 0.13.0"]
+  "dependencies": ["base >= 0.14.0"]
 }

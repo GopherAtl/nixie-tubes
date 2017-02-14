@@ -75,7 +75,7 @@ data:extend(
     circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
     circuit_wire_max_distance = 7.5
   },
-  
+
   -- 2x1 tile one-charater alpha nixie tube
   {
     type = "recipe",
@@ -224,7 +224,7 @@ data:extend(
           width = 20,
           height = 44,
           frame_count = 1,
-          direction_count = 40,
+          direction_count = 80,
           apply_runtime_tint = true,
           max_advance = 0.2,
           shift = {-5/32,-7/32},
@@ -232,6 +232,11 @@ data:extend(
           {
             {
              filename = "__nixie-tubes__/graphics/nixie-digits-mono.png",
+             width_in_frames = 10,
+             height_in_frames = 4,
+            },
+            { --extended symbols
+             filename = "__nixie-tubes__/graphics/nixie-symbols-mono.png",
              width_in_frames = 10,
              height_in_frames = 4,
             },

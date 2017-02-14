@@ -1,5 +1,5 @@
 -- luacheck: globals refresh_rate global game defines script
-
+local controllersPerTick = 5
 local alphasPerTick = 10
 
 local function removeSpriteObj(obj)
@@ -25,51 +25,74 @@ local function removeSpriteObjs(nixie)
 end
 
 local smallstep=1/12
-local bigstep=1/40
+local bigstep=1/80
 --build LuT to convert states into orientation values.
+local function projected_orientation(turn)
+  local x = math.sin(turn * math.pi * 2)
+  local y = -math.cos(turn * math.pi * 2)
+
+  y = y * math.cos(math.pi / 4)
+
+  return math.atan2(x, -y) / (math.pi * 2)
+end
+
 local stateOrientMap = {
   { -- state map for big nixies
-  -- A straight count *should* work here but doesn't. Maybe one day I'll figure out why...
-  ["0"]=bigstep*0,
-  ["1"]=bigstep*1,
-  ["2"]=bigstep*2.5,
-  ["3"]=bigstep*3.5,
-  ["4"]=bigstep*4.7,
-  ["5"]=bigstep*5.7,
-  ["6"]=bigstep*6.7,
-  ["7"]=bigstep*7.5,
-  ["8"]=bigstep*8.5,
-  ["9"]=bigstep*9,
-  ["A"]=bigstep*10,
-  ["B"]=bigstep*11,
-  ["C"]=bigstep*11.5,
-  ["D"]=bigstep*12,
-  ["E"]=bigstep*13,
-  ["F"]=bigstep*14,
-  ["G"]=bigstep*15,
-  ["H"]=bigstep*16,
-  ["I"]=bigstep*17,
-  ["J"]=bigstep*19,
-  ["K"]=bigstep*20,
-  ["L"]=bigstep*21,
-  ["M"]=bigstep*22.5,
-  ["N"]=bigstep*23.5,
-  ["O"]=bigstep*24.7,
-  ["P"]=bigstep*25.7,
-  ["Q"]=bigstep*26.7,
-  ["R"]=bigstep*27.5,
-  ["S"]=bigstep*28.5,
-  ["T"]=bigstep*29,
-  ["U"]=bigstep*30,
-  ["V"]=bigstep*31,
-  ["W"]=bigstep*31.5,
-  ["X"]=bigstep*32,
-  ["Y"]=bigstep*33,
-  ["Z"]=bigstep*34,
-  ["err"]=bigstep*35,
-  ["dot"]=bigstep*36,
-  ["minus"]=bigstep*37,
-  ["off"]=bigstep*38,
+  ["0"]=projected_orientation(0*bigstep),
+  ["1"]=projected_orientation(1*bigstep),
+  ["2"]=projected_orientation(2*bigstep),
+  ["3"]=projected_orientation(3*bigstep),
+  ["4"]=projected_orientation(4*bigstep),
+  ["5"]=projected_orientation(5*bigstep),
+  ["6"]=projected_orientation(6*bigstep),
+  ["7"]=projected_orientation(7*bigstep),
+  ["8"]=projected_orientation(8*bigstep),
+  ["9"]=projected_orientation(9*bigstep),
+  ["A"]=projected_orientation(10*bigstep),
+  ["B"]=projected_orientation(11*bigstep),
+  ["C"]=projected_orientation(12*bigstep),
+  ["D"]=projected_orientation(13*bigstep),
+  ["E"]=projected_orientation(14*bigstep),
+  ["F"]=projected_orientation(15*bigstep),
+  ["G"]=projected_orientation(16*bigstep),
+  ["H"]=projected_orientation(17*bigstep),
+  ["I"]=projected_orientation(18*bigstep),
+  ["J"]=projected_orientation(19*bigstep),
+  ["K"]=projected_orientation(20*bigstep),
+  ["L"]=projected_orientation(21*bigstep),
+  ["M"]=projected_orientation(22*bigstep),
+  ["N"]=projected_orientation(23*bigstep),
+  ["O"]=projected_orientation(24*bigstep),
+  ["P"]=projected_orientation(25*bigstep),
+  ["Q"]=projected_orientation(26*bigstep),
+  ["R"]=projected_orientation(27*bigstep),
+  ["S"]=projected_orientation(28*bigstep),
+  ["T"]=projected_orientation(29*bigstep),
+  ["U"]=     projected_orientation(30*bigstep),
+  ["V"]=     projected_orientation(31*bigstep),
+  ["W"]=     projected_orientation(32*bigstep),
+  ["X"]=     projected_orientation(33*bigstep),
+  ["Y"]=     projected_orientation(34*bigstep),
+  ["Z"]=     projected_orientation(35*bigstep),
+  ["err"]=   projected_orientation(36*bigstep),
+  ["dot"]=   projected_orientation(37*bigstep),
+  ["negative"]= projected_orientation(38*bigstep), -- for negative numbers
+
+  --extended symbols
+  ["off"]=   projected_orientation(39*bigstep),
+  ["?"]=projected_orientation(40*bigstep),
+  ["!"]=projected_orientation(41*bigstep),
+  ["@"]=projected_orientation(42*bigstep),
+  ["["]=projected_orientation(43*bigstep),
+  ["]"]=projected_orientation(44*bigstep),
+  ["{"]=projected_orientation(45*bigstep),
+  ["}"]=projected_orientation(46*bigstep),
+  ["("]=projected_orientation(47*bigstep),
+  [")"]=projected_orientation(48*bigstep),
+  ["/"]=projected_orientation(49*bigstep),
+  ["*"]=projected_orientation(50*bigstep),
+  ["-"]=projected_orientation(51*bigstep), -- for subtraction operation
+  ["+"]=projected_orientation(52*bigstep),
 
   },
   { -- state map for small nixies
@@ -84,7 +107,7 @@ local stateOrientMap = {
   ["7"]=smallstep*8,
   ["8"]=smallstep*9,
   ["9"]=smallstep*10,
-  ["minus"]=smallstep*11,
+  ["negative"]=smallstep*11,
   },
 }
 
@@ -125,8 +148,24 @@ local signalCharMap = {
   ["signal-X"] = "X",
   ["signal-Y"] = "Y",
   ["signal-Z"] = "Z",
-  ["fast-splitter"] = "minus",
-  ["train-stop"] = "dot",
+  ["signal-negative"] = "negative",
+  ["train-stop"] = "dot", -- for compatibility with earlier versions
+
+  --extended symbols
+  ["signal-stop"] = "dot",
+  ["signal-qmark"]="?",
+  ["signal-exmark"]="!",
+  ["signal-at"]="@",
+  ["signal-sqopen"]="[",
+  ["signal-sqclose"]="]",
+  ["signal-curopen"]="{",
+  ["signal-curclose"]="}",
+  ["signal-paropen"]="(",
+  ["signal-parclose"]=")",
+  ["signal-slash"]="/",
+  ["signal-asterisk"]="*",
+  ["signal-minus"]="-",
+  ["signal-plus"]="+",
 }
 
 local signalColorMap = {
@@ -217,18 +256,18 @@ local function displayBlank(entity)
   end
 end
 
-local function displayMinus(entity,color)
+local function displayNegative(entity,color)
   local nextdigit = global.nextdigit[entity.unit_number]
 
-  setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"minus"} or {"off","minus"},color)
+  setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"negative"} or {"off","negative"},color)
   if nextdigit and nextdigit.valid then
     displayBlank(nextdigit)
   end
 end
 
 local function displayValue(entity,v,color)
-  local minus=v<0
-  if minus then v=-v end
+  local negative=v<0
+  if negative then v=-v end
   local nextdigit = global.nextdigit[entity.unit_number]
 
   if #global.spriteobjs[entity.unit_number] == 1 then
@@ -237,9 +276,9 @@ local function displayValue(entity,v,color)
     local state = tostring(m)
     setStates(entity,{state},color)
     if nextdigit and nextdigit.valid then
-      if v == 0 and minus then
-        displayMinus(nextdigit,color)
-      elseif minus then
+      if v == 0 and negative then
+        displayNegative(nextdigit,color)
+      elseif negative then
         displayValue(nextdigit,-v,color)
       elseif v == 0 then
         displayBlank(nextdigit)
@@ -256,18 +295,18 @@ local function displayValue(entity,v,color)
     local state2 = tostring(n)
     if m>0 or v>0 then
       state1 = tostring(m)
-    elseif minus then
-      state1 = "minus"
-      minus = nil
+    elseif negative then
+      state1 = "negative"
+      negative = nil
     else
       state1 = "off"
     end
     setStates(entity,{state1,state2},color)
 
     if nextdigit and nextdigit.valid then
-      if v == 0 and minus then
-        displayMinus(nextdigit,color)
-      elseif minus then
+      if v == 0 and negative then
+        displayNegative(nextdigit,color)
+      elseif negative then
         displayValue(nextdigit,-v,color)
       elseif v == 0 then
         displayBlank(nextdigit)
@@ -301,6 +340,20 @@ local function getAlphaSignals(entity,wire_type,charsig,colorsig)
   return ch,co
 end
 
+local function getColorSignals(entity,wire_type,colorsig)
+  local net = entity.get_circuit_network(wire_type)
+
+  local co = colorsig
+
+  if net then
+    for _,s in pairs(net.signals) do
+      local c = signalColorMap[s.signal.name]
+      if c then co = c end
+    end
+  end
+
+  return co
+end
 
 local function onTickController(entity)
   if not entity.valid then
@@ -310,8 +363,8 @@ local function onTickController(entity)
 
   local _,color = nil,nil
   if entity.get_or_create_control_behavior().use_colors then
-     _,color=getAlphaSignals(entity,defines.wire_type.red,_,color)
-     _,color=getAlphaSignals(entity,defines.wire_type.green,_,color)
+    color=getColorSignals(entity,defines.wire_type.red,color)
+    color=getColorSignals(entity,defines.wire_type.green,color)
   end
 
   local v,changed=get_signal_value(entity)
@@ -346,10 +399,10 @@ end
 
 local function onTick(event)
 
-  if event.tick%5 == 0 then
-    for _,nixie in pairs(global.controllers) do
-      onTickController(nixie)
-    end
+  for _=1,controllersPerTick do
+    local nixie
+    global.next_controller,nixie = next(global.controllers,global.next_controller)
+    if nixie then onTickController(nixie) end
   end
 
   for _=1,alphasPerTick do
