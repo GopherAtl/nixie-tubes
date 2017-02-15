@@ -1,5 +1,4 @@
-data:extend(
-{
+data:extend{
 
   -- original 2x1 tile one-digit nixie tube
   {
@@ -287,7 +286,6 @@ data:extend(
     inventory_size = 0
   },
 
-
   -- small 1x1 tile two-digit nixie tube
   {
     type = "recipe",
@@ -496,4 +494,8 @@ data:extend(
   },
 
 
-})
+}
+
+local colorman = table.deepcopy(data.raw['player']['player'])
+colorman.name = "nixie-colorman"
+data:extend{colorman}

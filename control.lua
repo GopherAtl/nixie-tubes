@@ -190,7 +190,8 @@ local function setStates(nixie,newstates,color)
         if new_state == "off" then color=signalColorMap["off"] end
         -- create and color a passenger
         if not obj.passenger then
-          obj.passenger = obj.surface.create_entity{name="player", position=obj.position,force=obj.force}
+          obj.passenger = obj.surface.create_entity{name="nixie-colorman", position=obj.position,force=obj.force}
+          obj.passenger.active=false
         end
         obj.passenger.color=color
       else
