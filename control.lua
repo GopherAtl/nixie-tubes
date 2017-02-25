@@ -455,6 +455,12 @@ local function onPlaceEntity(event)
         name=entity.name}
       for _,n in pairs(neighbors) do
         if n.valid then
+
+          if global.next_controller == n.unit_number then
+            -- if it's currently the *next* controller, claim that too...
+            global.next_controller = entity.unit_number
+          end
+
           global.controllers[n.unit_number] = nil
           global.nextdigit[entity.unit_number] = n
         end
@@ -481,19 +487,32 @@ local function onPlaceEntity(event)
 end
 
 local function onRemoveEntity(entity)
+  local _
   if entity.valid then
     if validEntityName[entity.name] then
       removeSpriteObjs(entity)
+
       --if I was a controller, deregister
+      if global.next_controller == entity.unit_number then
+        -- if i was the *next* controller, pass it forward...
+        global.next_controller,_ = next(global.controllers,global.next_controller)
+      end
       global.controllers[entity.unit_number]=nil
+
       --if i was an alpha, deregister
+      if global.next_alpha == entity.unit_number then
+        -- if i was the *next* alpha, pass it forward...
+        global.next_alpha,_ = next(global.alphas,global.next_alpha)
+      end
       global.alphas[entity.unit_number]=nil
+
       --if I had a next-digit, register it as a controller
       local nextdigit = global.nextdigit[entity.unit_number]
       if nextdigit and nextdigit.valid then
         global.controllers[nextdigit.unit_number] = nextdigit
         displayBlank(nextdigit)
       end
+
     end
   end
 end
