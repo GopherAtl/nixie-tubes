@@ -179,6 +179,31 @@ local signalColorMap = {
   ["signal-cyan"]   = {r=0.0,  g=1.0,  b=1.0, a=1},
 }
 
+local function RegisterStrings()
+  if remote.interfaces['signalstrings']['register_signal'] then
+    local syms = {
+      ["signal-stop"] = ".",
+      ["signal-qmark"]="?",
+      ["signal-exmark"]="!",
+      ["signal-at"]="@",
+      ["signal-sqopen"]="[",
+      ["signal-sqclose"]="]",
+      ["signal-curopen"]="{",
+      ["signal-curclose"]="}",
+      ["signal-paropen"]="(",
+      ["signal-parclose"]=")",
+      ["signal-slash"]="/",
+      ["signal-asterisk"]="*",
+      ["signal-minus"]="-",
+      ["signal-plus"]="+",
+    }
+    for name,char in pairs(syms) do
+      remote.call('signalstrings','register_signal',name,char)
+    end
+  end
+end
+
+
 --sets the state(s) and update the sprite for a nixie
 local function setStates(nixie,newstates,color)
   for key,new_state in pairs(newstates) do
@@ -522,8 +547,13 @@ script.on_init(function()
   global.controllers = {}
   global.spriteobjs = {}
   global.nextdigit = {}
+
+  RegisterStrings()
 end)
 
+script.on_load(function()
+  RegisterStrings()
+end)
 
 script.on_configuration_changed(function(data)
   if data.mod_changes and data.mod_changes["nixie-tubes"] then

@@ -9,7 +9,7 @@ data:extend(
 
 
 local symcount=1
-local function create_symsignal(name)
+local function create_symsignal(name,sort)
   data:extend(
   {
     {
@@ -17,7 +17,7 @@ local function create_symsignal(name)
       name = "signal-" .. name,
       icon = "__nixie-tubes__/graphics/signal/signal_" .. name .. ".png",
       subgroup = "virtual-signal-symbol",
-      order = "e[symbols]-[" .. name .. "]"
+      order = "e[symbols]-" .. sort .. "[" .. name .. "]"
     }
   })
   symcount = symcount + 1
@@ -26,17 +26,19 @@ end
 --create_symsignal("negative")
 
 --extended symbols
-create_symsignal("stop")
-create_symsignal("qmark")
-create_symsignal("exmark")
-create_symsignal("at")
-create_symsignal("sqopen")
-create_symsignal("sqclose")
-create_symsignal("curopen")
-create_symsignal("curclose")
-create_symsignal("paropen")
-create_symsignal("parclose")
-create_symsignal("slash")
-create_symsignal("asterisk")
-create_symsignal("minus")
-create_symsignal("plus")
+create_symsignal("sqopen",'a')
+create_symsignal("sqclose",'a')
+create_symsignal("curopen",'a')
+create_symsignal("curclose",'a')
+create_symsignal("paropen",'a')
+create_symsignal("parclose",'a')
+
+create_symsignal("stop",'b')
+create_symsignal("qmark",'b')
+create_symsignal("exmark",'b')
+create_symsignal("at",'c')
+
+create_symsignal("slash",'d')
+create_symsignal("asterisk",'d')
+create_symsignal("minus",'d')
+create_symsignal("plus",'d')
