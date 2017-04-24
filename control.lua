@@ -348,7 +348,7 @@ local function getAlphaSignals(entity,wire_type,charsig,colorsig)
 
   local ch,co = charsig,colorsig
 
-  if net then
+  if net and net.signals and #net.signals > 0 then
     for _,s in pairs(net.signals) do
       if signalCharMap[s.signal.name] then
         if ch then

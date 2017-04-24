@@ -160,18 +160,7 @@ data:extend{
     corpse = "small-remnants",
     energy_per_hit_point = 1,
     crash_trigger = crash_trigger(),
-    resistances =
-    {
-      {
-        type = "fire",
-        percent = 50
-      },
-      {
-        type = "impact",
-        percent = 30,
-        decrease = 30
-      }
-    },
+    resistances = { },
     collision_box = {{-0.1, -.1}, {.1,.1}},
     collision_mask = { "item-layer", "object-layer", "player-layer", "water-tile"},
     selection_box = {{0,0}, {0,0}},
@@ -257,7 +246,7 @@ data:extend{
         }
       },
     },
-    sound_minimum_speed = 0;
+    sound_minimum_speed = 1;
     vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0 },
     working_sound =
     {
@@ -348,17 +337,19 @@ data:extend{
     {
       shadow =
       {
-        red = {26/32, -11/32},
-        green = {26/32, -11/32},
+        red = {12/32, 15/32},
+        green = {12/32, 19/32},
       },
       wire =
       {
-        red = {12/32, -25/32},
-        green = {12/32, -25/32},
+        red = {12/32, 13/32},
+        green = {12/32, 18/32},
       }
     },
 
-    circuit_wire_max_distance = 7.5
+    circuit_wire_max_distance = 7.5,
+
+    circuit_connector_sprites = get_circuit_connector_sprites({4/32, 11/32}, {4/32, 11/32}, 18),
   },
 
   {
@@ -372,18 +363,7 @@ data:extend{
     corpse = "small-remnants",
     energy_per_hit_point = 1,
     crash_trigger = crash_trigger(),
-    resistances =
-    {
-      {
-        type = "fire",
-        percent = 50
-      },
-      {
-        type = "impact",
-        percent = 30,
-        decrease = 30
-      }
-    },
+    resistances = {},
     collision_box = {{-0.1, -.1}, {.1,.1}},
     collision_mask = { "item-layer", "object-layer", "player-layer", "water-tile"},
     selection_box = {{0,0}, {0,0}},
@@ -464,7 +444,7 @@ data:extend{
         }
       },
     },
-    sound_minimum_speed = 0;
+    sound_minimum_speed = 1;
     vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0 },
     working_sound =
     {
