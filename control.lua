@@ -371,7 +371,7 @@ local function getColorSignals(entity,wire_type,colorsig)
 
   local co = colorsig
 
-  if net then
+  if net and net.signals and #net.signals > 0 then
     for _,s in pairs(net.signals) do
       local c = signalColorMap[s.signal.name]
       if c then co = c end
