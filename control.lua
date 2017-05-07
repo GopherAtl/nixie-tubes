@@ -169,14 +169,17 @@ local signalCharMap = {
 }
 
 local signalColorMap = {
-  ["off"]           = {r=1.0,  g=1.0,  b=1.0, a=1}, -- off state, no glow
-  ["default"]       = {r=1.0,  g=0.6,  b=0.2, a=1}, -- pretty close to original-orange
-  ["signal-red"]    = {r=1.0,  g=0.2,  b=0.2, a=1},
-  ["signal-green"]  = {r=0.2,  g=1.0,  b=0.2, a=1},
-  ["signal-blue"]   = {r=0.6,  g=0.6,  b=1.0, a=1}, -- pure blue is too dark, so brighten it up just a little bit
-  ["signal-yellow"] = {r=1.0,  g=1.0,  b=0.2, a=1},
-  ["signal-pink"]   = {r=1.0,  g=0.4,  b=1.0, a=1},
-  ["signal-cyan"]   = {r=0.0,  g=1.0,  b=1.0, a=1},
+  ["off"]           = {r=1.0,  g=1.0,  b=1.0, a=1.0}, -- off state, no glow
+  ["default"]       = {r=1.0,  g=0.6,  b=0.2, a=1.0}, -- pretty close to original-orange
+  ["signal-red"]    = {r=1.0,  g=0.2,  b=0.2, a=1.0},
+  ["signal-green"]  = {r=0.2,  g=1.0,  b=0.2, a=1.0},
+  ["signal-blue"]   = {r=0.6,  g=0.6,  b=1.0, a=1.0}, -- pure blue is too dark, so brighten it up just a little bit
+  ["signal-yellow"] = {r=1.0,  g=1.0,  b=0.2, a=1.0},
+  ["signal-pink"]   = {r=1.0,  g=0.4,  b=1.0, a=1.0},
+  ["signal-cyan"]   = {r=0.0,  g=1.0,  b=1.0, a=1.0},
+  ["signal-white"]  = {r=1.0,  g=1.0,  b=1.0, a=1.0},
+  ["signal-grey"]   = {r=0.6,  g=0.6,  b=0.6, a=1.0},
+  ["signal-black"]  = {r=0.0,  g=0.0,  b=0.0, a=1.0},
 }
 
 local function RegisterStrings()
