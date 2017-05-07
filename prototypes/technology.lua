@@ -3,6 +3,7 @@ data:extend({
   	type = "technology",
   	name = "cathodes",
     icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
+    icon_size = 32,
   	unit = {
   		count=20,
       time=10,
