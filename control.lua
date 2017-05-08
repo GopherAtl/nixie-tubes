@@ -370,19 +370,40 @@ local function getAlphaSignals(entity,wire_type,charsig,colorsig)
   return ch,co
 end
 
-local function getColorSignals(entity,wire_type,colorsig)
+-- of all the color signals on a wire, return the {r,g,b,a} color for the highest signal
+-- if multiple signals are tied for highest, mix their colors
+local function getMaxColorSignal(entity,wire_type)
   local net = entity.get_circuit_network(wire_type)
 
-  local co = colorsig
+  local maxColors, maxCount = nil, nil
 
   if net and net.signals and #net.signals > 0 then
-    for _,s in pairs(net.signals) do
-      local c = signalColorMap[s.signal.name]
-      if c then co = c end
+    for _,signal in pairs(net.signals) do
+      local candidateColor = signalColorMap[signal.signal.name]
+      if candidateColor and (maxCount == nil or signal.count > maxCount) then
+        -- new highest count
+        maxCount = signal.count
+        maxColors = {candidateColor}
+      elseif candidateColor and (maxCount == nil or signal.count == maxCount) then
+        -- tied for highest, add to list of colors
+        table.insert(maxColors, candidateColor)
+      end
     end
   end
 
-  return co
+  if maxColors then
+    local maxColor = {}
+    for _,channel in ipairs({"r","g","b","a"}) do
+      local sum = 0
+      for _,color in ipairs(maxColors) do
+        sum = sum + color[channel]
+      end
+      maxColor[channel] = sum / #maxColors
+    end
+    return maxColor, maxCount
+  else
+    return nil, nil
+  end
 end
 
 local function onTickController(entity)
@@ -391,15 +412,40 @@ local function onTickController(entity)
     return
   end
 
-  local _,color = nil,nil
-  if entity.get_or_create_control_behavior().use_colors then
-    color=getColorSignals(entity,defines.wire_type.red,color)
-    color=getColorSignals(entity,defines.wire_type.green,color)
-  end
-
   local v,changed=get_signal_value(entity)
   if v then
-    if changed or color then
+    if changed then
+      displayValue(entity,v,color)
+    end
+    local color
+    if entity.get_or_create_control_behavior().use_colors then
+      color1,count1 = getMaxColorSignal(entity,defines.wire_type.red)
+      color2,count2 = getMaxColorSignal(entity,defines.wire_type.green)
+      if count1 == nil and count2 == nil then
+        color = nil
+      else
+        if count1 == nil then
+          color = color2
+        elseif count2 == nil then
+          color = color1
+        else
+          if count2 > count1 then
+            color = color2
+          elseif count1 > count2 then
+            color = color1
+          else
+            -- same max count from both wires, mix the colors
+            color = {
+              r = (color1.r + color2.r) / 2,
+              g = (color1.g + color2.g) / 2,
+              b = (color1.b + color2.b) / 2,
+              a = (color1.a + color2.a) / 2
+            }
+          end
+        end
+      end
+    end
+    if color then
       displayValue(entity,v,color)
     end
   else
