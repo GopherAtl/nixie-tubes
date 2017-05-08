@@ -14,13 +14,7 @@ end
 
 local function removeSpriteObjs(nixie)
   for _,obj in pairs(global.spriteobjs[nixie.unit_number]) do
-    if obj.valid then
-      if obj.passenger then
-        obj.passenger.destroy()
-      end
-      obj.clear_items_inside()
-      obj.destroy()
-    end
+    removeSpriteObj(obj)
   end
 end
 
@@ -227,7 +221,7 @@ local function setStates(nixie,newstates,color)
         obj.orientation=stateOrientMap[#newstates]["off"]
       end
     else
-      game.players[1].print("invalid nixie?")
+      game.print("invalid nixie?")
     end
   end
 end
@@ -524,6 +518,15 @@ local function onPlaceEntity(event)
     if entity.name == "nixie-tube-alpha" then
       global.alphas[entity.unit_number] = entity
     else
+
+      -- properly reset nixies when (re)added
+      local behavior = entity.get_or_create_control_behavior()
+    	local condition = behavior.circuit_condition
+      condition.condition.comparator="="
+      condition.condition.constant=val
+      condition.condition.second_signal=nil
+      behavior.circuit_condition = condition
+
       --enslave guy to left, if there is one
       local neighbors=surf.find_entities_filtered{
         position={x=entity.position.x-1,y=entity.position.y},
@@ -555,7 +558,6 @@ local function onPlaceEntity(event)
       end
       if not foundright then
         global.controllers[entity.unit_number] = entity
-        onTickController(entity)
       end
     end
   end
