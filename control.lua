@@ -555,7 +555,7 @@ local function onPlaceEntity(event)
       end
       if not foundright then
         global.controllers[entity.unit_number] = entity
-        setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"0"} or {"off","0"})
+        onTickController(entity)
       end
     end
   end
