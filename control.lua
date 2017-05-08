@@ -1,6 +1,4 @@
--- luacheck: globals refresh_rate global game defines script
-local controllersPerTick = 5
-local alphasPerTick = 10
+-- luacheck: globals global settings game defines script
 
 local function removeSpriteObj(obj)
   if obj.valid then
@@ -143,7 +141,6 @@ local signalCharMap = {
   ["signal-Y"] = "Y",
   ["signal-Z"] = "Z",
   ["signal-negative"] = "negative",
-  ["train-stop"] = "dot", -- for compatibility with earlier versions
 
   --extended symbols
   ["signal-stop"] = "dot",
@@ -171,10 +168,26 @@ local signalColorMap = {
   ["signal-yellow"] = {r=1.0,  g=1.0,  b=0.2, a=1.0},
   ["signal-pink"]   = {r=1.0,  g=0.4,  b=1.0, a=1.0},
   ["signal-cyan"]   = {r=0.0,  g=1.0,  b=1.0, a=1.0},
-  ["signal-white"]  = {r=1.0,  g=1.0,  b=1.0, a=1.0},
-  ["signal-grey"]   = {r=0.6,  g=0.6,  b=0.6, a=1.0},
-  ["signal-black"]  = {r=0.0,  g=0.0,  b=0.0, a=1.0},
 }
+
+
+local function UpdateColorSettings()
+  if settings.global["nixie-tubes-enable-color-grey"].value then
+    signalColorMap["signal-grey"] = {r=0.6,  g=0.6,  b=0.6, a=1.0}
+  else
+    signalColorMap["signal-grey"] = nil
+  end
+  if settings.global["nixie-tubes-enable-color-white"].value then
+    signalColorMap["signal-white"] = {r=1.0,  g=1.0,  b=1.0, a=1.0}
+  else
+    signalColorMap["signal-white"] = nil
+  end
+  if settings.global["nixie-tubes-enable-color-black"].value then
+    signalColorMap["signal-black"] = {r=0.0,  g=0.0,  b=0.0, a=1.0}
+  else
+    signalColorMap["signal-black"] = nil
+  end
+end
 
 local function RegisterStrings()
   if remote.interfaces['signalstrings'] and remote.interfaces['signalstrings']['register_signal'] then
@@ -469,13 +482,13 @@ end
 
 local function onTick(event)
 
-  for _=1,controllersPerTick do
+  for _=1, settings.global["nixie-tube-update-speed-numeric"].value do
     local nixie
     global.next_controller,nixie = next(global.controllers,global.next_controller)
     if nixie then onTickController(nixie) end
   end
 
-  for _=1,alphasPerTick do
+  for _=1, settings.global["nixie-tube-update-speed-alpha"].value do
     local nixie
     global.next_alpha,nixie = next(global.alphas,global.next_alpha)
     if nixie then onTickAlpha(nixie) end
@@ -601,11 +614,20 @@ script.on_init(function()
   global.nextdigit = {}
 
   RegisterStrings()
+  UpdateColorSettings()
 end)
 
 script.on_load(function()
   RegisterStrings()
+  UpdateColorSettings()
 end)
+
+script.on_event(defines.events.on_runtime_mod_setting_changed,
+    function(event)
+      UpdateColorSettings()
+    end
+  )
+
 
 script.on_configuration_changed(function(data)
   if data.mod_changes and data.mod_changes["nixie-tubes"] then
