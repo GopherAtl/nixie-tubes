@@ -211,6 +211,7 @@ end
 local function setStates(nixie,newstates,color)
   for key,new_state in pairs(newstates) do
     local obj = global.spriteobjs[nixie.unit_number][key]
+    local color = color
     if obj and obj.valid then
       if nixie.energy > 70 then
         obj.orientation=stateOrientMap[#newstates][new_state]

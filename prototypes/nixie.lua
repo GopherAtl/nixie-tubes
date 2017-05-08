@@ -416,6 +416,7 @@ data:extend{
           height = 22,
           frame_count = 1,
           direction_count = 12,
+          apply_runtime_tint = true,
           shift = {-5/32,-8/32},
           animation_speed = 0.1,
           max_advance = 0.2,
