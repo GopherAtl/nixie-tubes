@@ -317,6 +317,7 @@ data:extend{
     },
     energy_usage_per_tick = "4KW",
     light = {intensity = 0.0, size = 0, color = {r=1, g=.6, b=.3, a=0}},
+    light_when_colored = {intensity = 1, size = 6, color = {r=1.0, g=1.0, b=1.0}},
     picture_off =
     {
       filename = "__nixie-tubes__/graphics/nixie-small-base.png",

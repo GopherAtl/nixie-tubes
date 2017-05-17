@@ -159,36 +159,6 @@ local signalCharMap = {
   ["signal-plus"]="+",
 }
 
-local signalColorMap = {
-  ["off"]           = {r=1.0,  g=1.0,  b=1.0, a=1.0}, -- off state, no glow
-  ["default"]       = {r=1.0,  g=0.6,  b=0.2, a=1.0}, -- pretty close to original-orange
-  ["signal-red"]    = {r=1.0,  g=0.2,  b=0.2, a=1.0},
-  ["signal-green"]  = {r=0.2,  g=1.0,  b=0.2, a=1.0},
-  ["signal-blue"]   = {r=0.6,  g=0.6,  b=1.0, a=1.0}, -- pure blue is too dark, so brighten it up just a little bit
-  ["signal-yellow"] = {r=1.0,  g=1.0,  b=0.2, a=1.0},
-  ["signal-pink"]   = {r=1.0,  g=0.4,  b=1.0, a=1.0},
-  ["signal-cyan"]   = {r=0.0,  g=1.0,  b=1.0, a=1.0},
-}
-
-
-local function UpdateColorSettings()
-  if settings.global["nixie-tubes-enable-color-grey"].value then
-    signalColorMap["signal-grey"] = {r=0.6,  g=0.6,  b=0.6, a=1.0}
-  else
-    signalColorMap["signal-grey"] = nil
-  end
-  if settings.global["nixie-tubes-enable-color-white"].value then
-    signalColorMap["signal-white"] = {r=1.0,  g=1.0,  b=1.0, a=1.0}
-  else
-    signalColorMap["signal-white"] = nil
-  end
-  if settings.global["nixie-tubes-enable-color-black"].value then
-    signalColorMap["signal-black"] = {r=0.0,  g=0.0,  b=0.0, a=1.0}
-  else
-    signalColorMap["signal-black"] = nil
-  end
-end
-
 local function RegisterStrings()
   if remote.interfaces['signalstrings'] and remote.interfaces['signalstrings']['register_signal'] then
     local syms = {
@@ -218,12 +188,11 @@ end
 local function setStates(nixie,newstates,color)
   for key,new_state in pairs(newstates) do
     local obj = global.spriteobjs[nixie.unit_number][key]
-    local color = color
     if obj and obj.valid then
       if nixie.energy > 70 then
         obj.orientation=stateOrientMap[#newstates][new_state]
-        if not color then color=signalColorMap["default"] end
-        if new_state == "off" then color=signalColorMap["off"] end
+        if not color then color={r=1.0,  g=0.6,  b=0.2, a=1.0} end
+        if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
         -- create and color a passenger
         if not obj.passenger then
           obj.passenger = obj.surface.create_entity{name="nixie-colorman", position=obj.position,force=obj.force}
@@ -354,10 +323,10 @@ local function displayValue(entity,v,color)
   end
 end
 
-local function getAlphaSignals(entity,wire_type,charsig,colorsig)
+local function getAlphaSignals(entity,wire_type,charsig)
   local net = entity.get_circuit_network(wire_type)
 
-  local ch,co = charsig,colorsig
+  local ch = charsig
 
   if net and net.signals and #net.signals > 0 then
     for _,s in pairs(net.signals) do
@@ -368,49 +337,10 @@ local function getAlphaSignals(entity,wire_type,charsig,colorsig)
           ch = signalCharMap[s.signal.name]
         end
       end
-      if signalColorMap[s.signal.name] then
-        co = signalColorMap[s.signal.name]
-      end
     end
   end
 
   return ch,co
-end
-
--- of all the color signals on a wire, return the {r,g,b,a} color for the highest signal
--- if multiple signals are tied for highest, mix their colors
-local function getMaxColorSignal(entity,wire_type)
-  local net = entity.get_circuit_network(wire_type)
-
-  local maxColors, maxCount = nil, nil
-
-  if net and net.signals and #net.signals > 0 then
-    for _,signal in pairs(net.signals) do
-      local candidateColor = signalColorMap[signal.signal.name]
-      if candidateColor and (maxCount == nil or signal.count > maxCount) then
-        -- new highest count
-        maxCount = signal.count
-        maxColors = {candidateColor}
-      elseif candidateColor and (maxCount == nil or signal.count == maxCount) then
-        -- tied for highest, add to list of colors
-        table.insert(maxColors, candidateColor)
-      end
-    end
-  end
-
-  if maxColors then
-    local maxColor = {}
-    for _,channel in ipairs({"r","g","b","a"}) do
-      local sum = 0
-      for _,color in ipairs(maxColors) do
-        sum = sum + color[channel]
-      end
-      maxColor[channel] = sum / #maxColors
-    end
-    return maxColor, maxCount
-  else
-    return nil, nil
-  end
 end
 
 local function onTickController(entity)
@@ -421,38 +351,14 @@ local function onTickController(entity)
 
   local v,changed=get_signal_value(entity)
   if v then
-    if changed then
-      displayValue(entity,v,color)
+    local color,updatecolor
+    local control = entity.get_or_create_control_behavior()
+    if control.use_colors then
+      color = control.color
+      local spriteobj = global.spriteobjs[entity.unit_number][1]
+      updatecolor = spriteobj.passenger and (spriteobj.passenger.color ~= color) or true
     end
-    local color
-    if entity.get_or_create_control_behavior().use_colors then
-      color1,count1 = getMaxColorSignal(entity,defines.wire_type.red)
-      color2,count2 = getMaxColorSignal(entity,defines.wire_type.green)
-      if count1 == nil and count2 == nil then
-        color = nil
-      else
-        if count1 == nil then
-          color = color2
-        elseif count2 == nil then
-          color = color1
-        else
-          if count2 > count1 then
-            color = color2
-          elseif count1 > count2 then
-            color = color1
-          else
-            -- same max count from both wires, mix the colors
-            color = {
-              r = (color1.r + color2.r) / 2,
-              g = (color1.g + color2.g) / 2,
-              b = (color1.b + color2.b) / 2,
-              a = (color1.a + color2.a) / 2
-            }
-          end
-        end
-      end
-    end
-    if color then
+    if changed or updatecolor then
       displayValue(entity,v,color)
     end
   else
@@ -468,13 +374,26 @@ local function onTickAlpha(entity)
     return
   end
 
-  local charsig,color = nil,nil
+  local charsig = nil
 
-  charsig,color=getAlphaSignals(entity,defines.wire_type.red,  charsig,color)
-  charsig,color=getAlphaSignals(entity,defines.wire_type.green,charsig,color)
+  charsig=getAlphaSignals(entity,defines.wire_type.red,  charsig)
+  charsig=getAlphaSignals(entity,defines.wire_type.green,charsig)
   charsig = charsig or "off"
 
-  if not entity.get_or_create_control_behavior().use_colors then color=nil end
+  local color
+  local control = entity.get_or_create_control_behavior()
+  if control.use_colors then
+    control.circuit_condition = {
+      condition={
+        first_signal={name="signal-anything",type="virtual"},
+        comparator="≠",
+        constant=0,
+        second_signal=nil
+      },
+      connect_to_logistic_network=false
+    }
+    color = control.color
+  end
 
   setStates(entity,{charsig},color)
 end
@@ -614,20 +533,11 @@ script.on_init(function()
   global.nextdigit = {}
 
   RegisterStrings()
-  UpdateColorSettings()
 end)
 
 script.on_load(function()
   RegisterStrings()
-  UpdateColorSettings()
 end)
-
-script.on_event(defines.events.on_runtime_mod_setting_changed,
-    function(event)
-      UpdateColorSettings()
-    end
-  )
-
 
 script.on_configuration_changed(function(data)
   if data.mod_changes and data.mod_changes["nixie-tubes"] then
