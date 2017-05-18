@@ -185,12 +185,13 @@ end
 
 
 --sets the state(s) and update the sprite for a nixie
-local function setStates(nixie,newstates,color)
+local function setStates(nixie,newstates,newcolor)
   for key,new_state in pairs(newstates) do
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and obj.valid then
       if nixie.energy > 70 then
         obj.orientation=stateOrientMap[#newstates][new_state]
+        local color = newcolor
         if not color then color={r=1.0,  g=0.6,  b=0.2, a=1.0} end
         if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
         -- create and color a passenger
@@ -355,8 +356,8 @@ local function onTickController(entity)
     local control = entity.get_or_create_control_behavior()
     if control.use_colors then
       color = control.color
-      local spriteobj = global.spriteobjs[entity.unit_number][1]
-      updatecolor = spriteobj.passenger and (spriteobj.passenger.color ~= color) or true
+      --TODO: smarter fail-fast for color
+      updatecolor = true
     end
     if changed or updatecolor then
       displayValue(entity,v,color)
