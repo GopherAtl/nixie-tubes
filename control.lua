@@ -253,15 +253,15 @@ local function displayValString(entity,vs,color)
 
   if not vs then
     setStates(entity,(chcount==1) and {"off"} or {"off","off"})
-  elseif #vs==1 and chcount==2 then
+  elseif #vs < chcount then
     setStates(entity,{"off",vs},color)
-  elseif #vs>=2 then
+  elseif #vs >= chcount then
     setStates(entity,(chcount==1) and {vs:sub(-1)} or {vs:sub(-2,-2),vs:sub(-1)},color)
   end
 
   if nextdigit then
-    if vs and #vs>2 then
-      displayValString(nextdigit,vs and vs:sub(1,-(chcount+1)),color)
+    if vs and #vs>chcount then
+      displayValString(nextdigit,vs:sub(1,-(chcount+1)),color)
     else
       displayValString(nextdigit)
     end
