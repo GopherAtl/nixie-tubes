@@ -16,7 +16,6 @@ local function removeSpriteObjs(nixie)
   end
 end
 
-local smallstep=1/12
 local bigstep=1/80
 --build LuT to convert states into orientation values.
 local function projected_orientation(turn)
@@ -28,7 +27,7 @@ local function projected_orientation(turn)
   return math.atan2(x, -y) / (math.pi * 2)
 end
 
-local stateOrientMap = {
+local stateOrientMap =
   { -- state map for big nixies
   ["0"]=projected_orientation(0*bigstep),
   ["1"]=projected_orientation(1*bigstep),
@@ -67,11 +66,11 @@ local stateOrientMap = {
   ["Y"]=     projected_orientation(34*bigstep),
   ["Z"]=     projected_orientation(35*bigstep),
   ["err"]=   projected_orientation(36*bigstep),
-  ["dot"]=   projected_orientation(37*bigstep),
+  ["."]=   projected_orientation(37*bigstep),
   ["negative"]= projected_orientation(38*bigstep), -- for negative numbers
+  ["off"]=   projected_orientation(39*bigstep),
 
   --extended symbols
-  ["off"]=   projected_orientation(39*bigstep),
   ["?"]=projected_orientation(40*bigstep),
   ["!"]=projected_orientation(41*bigstep),
   ["@"]=projected_orientation(42*bigstep),
@@ -86,22 +85,7 @@ local stateOrientMap = {
   ["-"]=projected_orientation(51*bigstep), -- for subtraction operation
   ["+"]=projected_orientation(52*bigstep),
 
-  },
-  { -- state map for small nixies
-  ["off"]=smallstep*0,
-  ["0"]=smallstep*1,
-  ["1"]=smallstep*2,
-  ["2"]=smallstep*3,
-  ["3"]=smallstep*4,
-  ["4"]=smallstep*5,
-  ["5"]=smallstep*6,
-  ["6"]=smallstep*7,
-  ["7"]=smallstep*8,
-  ["8"]=smallstep*9,
-  ["9"]=smallstep*10,
-  ["negative"]=smallstep*11,
-  },
-}
+  }
 
 local signalCharMap = {
   ["signal-0"] = "0",
@@ -143,7 +127,7 @@ local signalCharMap = {
   ["signal-negative"] = "negative",
 
   --extended symbols
-  ["signal-stop"] = "dot",
+  ["signal-stop"] = ".",
   ["signal-qmark"]="?",
   ["signal-exmark"]="!",
   ["signal-at"]="@",
@@ -187,10 +171,11 @@ end
 --sets the state(s) and update the sprite for a nixie
 local function setStates(nixie,newstates,newcolor)
   for key,new_state in pairs(newstates) do
+    if not new_state then new_state = "off" end
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and obj.valid then
       if nixie.energy > 70 then
-        obj.orientation=stateOrientMap[#newstates][new_state]
+        obj.orientation=stateOrientMap[new_state]
         local color = newcolor
         if not color then color={r=1.0,  g=0.6,  b=0.2, a=1.0} end
         if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
@@ -201,7 +186,7 @@ local function setStates(nixie,newstates,newcolor)
         end
         obj.passenger.color=color
       else
-        obj.orientation=stateOrientMap[#newstates]["off"]
+        obj.orientation=stateOrientMap["off"]
       end
     else
       game.print("invalid nixie?")
@@ -210,7 +195,7 @@ local function setStates(nixie,newstates,newcolor)
 end
 
 -- from binbinhfr/SmartDisplay, modified to check both wires and add them
-local function get_signal_value(entity)
+local function get_signal_value(entity,sig)
 	local behavior = entity.get_control_behavior()
 	if behavior == nil then	return nil end
 
@@ -218,11 +203,16 @@ local function get_signal_value(entity)
 	if condition == nil then return nil end
 
   -- shortcut, return stored value if unchanged
-  if condition.fulfilled and condition.condition.comparator=="=" then
+  if not sig and condition.fulfilled and condition.condition.comparator=="=" then
     return condition.condition.constant,false
   end
 
-	local signal = condition.condition.first_signal
+	local signal
+  if sig then
+    signal = sig
+  else
+    signal = condition.condition.first_signal
+  end
 
 	if signal == nil or signal.name == nil then return(nil)	end
 
@@ -241,11 +231,14 @@ local function get_signal_value(entity)
 
 	local val = redval + greenval
 
-  condition.condition.comparator="="
-  condition.condition.constant=val
-  condition.condition.second_signal=nil
-  behavior.circuit_condition = condition
-	return val,true
+  if not sig then
+    condition.condition.comparator="="
+    condition.condition.constant=val
+    condition.condition.second_signal=nil
+    behavior.circuit_condition = condition
+  end
+
+  return val,true
 end
 
 local validEntityName = {
@@ -254,74 +247,49 @@ local validEntityName = {
   ['nixie-tube-small'] = 2
 }
 
-local function displayBlank(entity)
+local function displayValString(entity,vs,color)
   local nextdigit = global.nextdigit[entity.unit_number]
+  local chcount = #global.spriteobjs[entity.unit_number]
 
-  setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"off"} or {"off","off"})
-  if nextdigit and nextdigit.valid then
-    displayBlank(nextdigit)
+  if not vs then
+    setStates(entity,(chcount==1) and {"off"} or {"off","off"})
+  elseif #vs==1 and chcount==2 then
+    setStates(entity,{"off",vs},color)
+  elseif #vs>=2 then
+    setStates(entity,(chcount==1) and {vs:sub(-1)} or {vs:sub(-2,-2),vs:sub(-1)},color)
   end
-end
 
-local function displayNegative(entity,color)
-  local nextdigit = global.nextdigit[entity.unit_number]
-
-  setStates(entity,(#global.spriteobjs[entity.unit_number]==1) and {"negative"} or {"off","negative"},color)
-  if nextdigit and nextdigit.valid then
-    displayBlank(nextdigit)
-  end
-end
-
-local function displayValue(entity,v,color)
-  local negative=v<0
-  if negative then v=-v end
-  local nextdigit = global.nextdigit[entity.unit_number]
-
-  if #global.spriteobjs[entity.unit_number] == 1 then
-    local m=v%10
-    v=(v-m)/10
-    local state = tostring(m)
-    setStates(entity,{state},color)
-    if nextdigit and nextdigit.valid then
-      if v == 0 and negative then
-        displayNegative(nextdigit,color)
-      elseif negative then
-        displayValue(nextdigit,-v,color)
-      elseif v == 0 then
-        displayBlank(nextdigit)
-      else
-        displayValue(nextdigit,v,color)
-      end
-    end
-  else
-    local m=v%100 -- two digits for this pair of nixies
-    v=(v-m)/100 -- remove two digits from what's left
-    local n=m%10 -- ones digit for this pair
-    m=(m-n)/10 -- tens digit for this pair
-    local state1
-    local state2 = tostring(n)
-    if m>0 or v>0 then
-      state1 = tostring(m)
-    elseif negative then
-      state1 = "negative"
-      negative = nil
+  if nextdigit then
+    if vs and #vs>2 then
+      displayValString(nextdigit,vs and vs:sub(1,-(chcount+1)),color)
     else
-      state1 = "off"
-    end
-    setStates(entity,{state1,state2},color)
-
-    if nextdigit and nextdigit.valid then
-      if v == 0 and negative then
-        displayNegative(nextdigit,color)
-      elseif negative then
-        displayValue(nextdigit,-v,color)
-      elseif v == 0 then
-        displayBlank(nextdigit)
-      else
-        displayValue(nextdigit,v,color)
-      end
+      displayValString(nextdigit)
     end
   end
+end
+
+local function float_from_int(i)
+  local sign = bit32.btest(i,0x80000000) and -1 or 1
+  local exponent = bit32.rshift(bit32.band(i,0x7F800000),23)-127
+  local significand = bit32.band(i,0x007FFFFF)
+
+  if exponent == 128 then
+    if significand == 0 then
+      return sign/0 --[[infinity]]
+    else
+      return 0/0 --[[nan]]
+    end
+  end
+
+  if exponent == -127 then
+    if significand == 0 then
+      return sign * 0 --[[zero]]
+    else
+      return sign * math.ldexp(significand,-149) --[[denormal numbers]]
+    end
+  end
+
+  return sign * math.ldexp(bit32.bor(significand,0x00800000),exponent-23) --[[normal numbers]]
 end
 
 local function getAlphaSignals(entity,wire_type,charsig)
@@ -360,10 +328,25 @@ local function onTickController(entity)
       updatecolor = true
     end
     if changed or updatecolor then
-      displayValue(entity,v,color)
+      local float = get_signal_value(entity,{name="signal-float",type="virtual"}) ~= 0
+      local hex = get_signal_value(entity,{name="signal-hex",type="virtual"}) ~= 0
+      local format = "%i"
+      if float and hex then
+        format = "%A"
+        v = float_from_int(v)
+      elseif hex then
+        format = "%X"
+        if v < 0 then v = v + 0x100000000 end
+      elseif float then
+        format = "%G"
+        v = float_from_int(v)
+      end
+
+      local vs = format:format(v)
+      displayValString(entity,vs,color)
     end
   else
-    displayBlank(entity)
+    displayValString(entity)
   end
 end
 
@@ -404,12 +387,20 @@ local function onTick(event)
 
   for _=1, settings.global["nixie-tube-update-speed-numeric"].value do
     local nixie
+    if global.next_controller and not global.controllers[global.next_controller] then
+      game.print("Invalid next_controller??")
+      global.next_controller=nil
+    end
     global.next_controller,nixie = next(global.controllers,global.next_controller)
     if nixie then onTickController(nixie) end
   end
 
   for _=1, settings.global["nixie-tube-update-speed-alpha"].value do
     local nixie
+    if global.next_alpha and not global.alphas[global.next_alpha] then
+      game.print("Invalid next_alpha??")
+      global.next_alpha=nil
+    end
     global.next_alpha,nixie = next(global.alphas,global.next_alpha)
     if nixie then onTickAlpha(nixie) end
   end
@@ -497,7 +488,6 @@ local function onPlaceEntity(event)
 end
 
 local function onRemoveEntity(entity)
-  local _
   if entity.valid then
     if validEntityName[entity.name] then
       removeSpriteObjs(entity)
@@ -505,14 +495,22 @@ local function onRemoveEntity(entity)
       --if I was a controller, deregister
       if global.next_controller == entity.unit_number then
         -- if i was the *next* controller, pass it forward...
-        global.next_controller,_ = next(global.controllers,global.next_controller)
+        if not global.controllers[global.next_controller] then
+          game.print("Invalid next_controller removal??")
+          global.next_controller=nil
+        end
+        global.next_controller = next(global.controllers,global.next_controller)
       end
       global.controllers[entity.unit_number]=nil
 
       --if i was an alpha, deregister
       if global.next_alpha == entity.unit_number then
         -- if i was the *next* alpha, pass it forward...
-        global.next_alpha,_ = next(global.alphas,global.next_alpha)
+        if not global.alphas[global.next_alpha] then
+          game.print("Invalid next_alpha removal??")
+          global.next_alpha=nil
+        end
+        global.next_alpha = next(global.alphas,global.next_alpha)
       end
       global.alphas[entity.unit_number]=nil
 
@@ -520,7 +518,7 @@ local function onRemoveEntity(entity)
       local nextdigit = global.nextdigit[entity.unit_number]
       if nextdigit and nextdigit.valid then
         global.controllers[nextdigit.unit_number] = nextdigit
-        displayBlank(nextdigit)
+        displayValString(nextdigit)
       end
 
     end
@@ -548,10 +546,12 @@ script.on_configuration_changed(function(data)
     if global.nixie_tubes then global.nixie_tubes = nil end
 
     -- clear the tables
-    global.alphas = {}
-    global.controllers = {}
-    global.spriteobjs = {}
-    global.nextdigit = {}
+    global = {
+      alphas = {},
+      controllers = {},
+      spriteobjs = {},
+      nextdigit = {},
+    }
 
     -- and re-index the world
     for _,surf in pairs(game.surfaces) do
@@ -568,6 +568,8 @@ script.on_configuration_changed(function(data)
         onPlaceEntity({created_entity=lamp})
       end
     end
+
+
   end
 end)
 

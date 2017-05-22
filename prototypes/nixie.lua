@@ -413,24 +413,50 @@ data:extend{
       layers =
       {
         {
-          width = 10,
-          height = 22,
+          width = 20,
+          height = 44,
           frame_count = 1,
-          direction_count = 12,
+          direction_count = 80,
           apply_runtime_tint = true,
-          shift = {-5/32,-8/32},
-          animation_speed = 0.1,
           max_advance = 0.2,
+          shift = {-5/32, -7/32},
+          scale = 0.5,
           stripes =
           {
             {
-             filename = "__nixie-tubes__/graphics/nixie-small-digits.png",
-             width_in_frames = 1,
-             height_in_frames = 12,
+             filename = "__nixie-tubes__/graphics/nixie-digits-mono.png",
+             width_in_frames = 10,
+             height_in_frames = 4,
+            },
+            { --extended symbols
+             filename = "__nixie-tubes__/graphics/nixie-symbols-mono.png",
+             width_in_frames = 10,
+             height_in_frames = 4,
             },
           }
-        },
+        }
       }
+      --layers =
+      --{
+      --  {
+      --    width = 10,
+      --    height = 22,
+      --    frame_count = 1,
+      --    direction_count = 12,
+      --    apply_runtime_tint = true,
+      --    shift = {-5/32,-8/32},
+      --    animation_speed = 0.1,
+      --    max_advance = 0.2,
+      --    stripes =
+      --    {
+      --      {
+      --       filename = "__nixie-tubes__/graphics/nixie-small-digits.png",
+      --       width_in_frames = 1,
+      --       height_in_frames = 12,
+      --      },
+      --    }
+      --  },
+      --}
     },
     stop_trigger_speed = 0.2,
     stop_trigger =
