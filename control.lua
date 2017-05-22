@@ -248,6 +248,9 @@ local validEntityName = {
 }
 
 local function displayValString(entity,vs,color)
+
+  if not (entity and entity.valid) then return end
+
   local nextdigit = global.nextdigit[entity.unit_number]
   local chcount = #global.spriteobjs[entity.unit_number]
 
