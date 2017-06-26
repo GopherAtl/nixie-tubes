@@ -175,7 +175,9 @@ local function setStates(nixie,newstates,newcolor)
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and obj.valid then
       if nixie.energy > 70 then
-        obj.orientation=stateOrientMap[new_state]
+        if math.abs(obj.orientation - stateOrientMap[new_state]) < 1/160 then
+          obj.orientation=stateOrientMap[new_state]
+        end
         local color = newcolor
         if not color then color={r=1.0,  g=0.6,  b=0.2, a=1.0} end
         if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
@@ -186,7 +188,9 @@ local function setStates(nixie,newstates,newcolor)
         end
         obj.passenger.color=color
       else
-        obj.orientation=stateOrientMap["off"]
+        if obj.orientation ~= stateOrientMap["off"] then
+          obj.orientation=stateOrientMap["off"]
+        end
       end
     else
       game.print("invalid nixie?")
@@ -436,6 +440,7 @@ local function onPlaceEntity(event)
               position=position,
             force=entity.force
         })
+      sprite.active=false
       sprite.orientation=0
       sprite.insert({name="coal",count=1})
       sprites[n]=sprite
