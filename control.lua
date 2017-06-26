@@ -175,7 +175,7 @@ local function setStates(nixie,newstates,newcolor)
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and obj.valid then
       if nixie.energy > 70 then
-        if math.abs(obj.orientation - stateOrientMap[new_state]) < 1/160 then
+        if math.abs(obj.orientation - stateOrientMap[new_state]) > 1/160 then
           obj.orientation=stateOrientMap[new_state]
         end
         local color = newcolor
