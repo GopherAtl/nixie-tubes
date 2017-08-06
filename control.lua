@@ -2,10 +2,6 @@
 
 local function removeSpriteObj(obj)
   if obj.valid then
-    if obj.passenger then
-      obj.passenger.destroy()
-    end
-    obj.clear_items_inside()
     obj.destroy()
   end
 end
@@ -16,74 +12,63 @@ local function removeSpriteObjs(nixie)
   end
 end
 
-local bigstep=1/80
---build LuT to convert states into orientation values.
-local function projected_orientation(turn)
-  local x = math.sin(turn * math.pi * 2)
-  local y = -math.cos(turn * math.pi * 2)
-
-  y = y * math.cos(math.pi / 4)
-
-  return math.atan2(x, -y) / (math.pi * 2)
-end
-
 local stateOrientMap =
   { -- state map for big nixies
-  ["0"]=projected_orientation(0*bigstep),
-  ["1"]=projected_orientation(1*bigstep),
-  ["2"]=projected_orientation(2*bigstep),
-  ["3"]=projected_orientation(3*bigstep),
-  ["4"]=projected_orientation(4*bigstep),
-  ["5"]=projected_orientation(5*bigstep),
-  ["6"]=projected_orientation(6*bigstep),
-  ["7"]=projected_orientation(7*bigstep),
-  ["8"]=projected_orientation(8*bigstep),
-  ["9"]=projected_orientation(9*bigstep),
-  ["A"]=projected_orientation(10*bigstep),
-  ["B"]=projected_orientation(11*bigstep),
-  ["C"]=projected_orientation(12*bigstep),
-  ["D"]=projected_orientation(13*bigstep),
-  ["E"]=projected_orientation(14*bigstep),
-  ["F"]=projected_orientation(15*bigstep),
-  ["G"]=projected_orientation(16*bigstep),
-  ["H"]=projected_orientation(17*bigstep),
-  ["I"]=projected_orientation(18*bigstep),
-  ["J"]=projected_orientation(19*bigstep),
-  ["K"]=projected_orientation(20*bigstep),
-  ["L"]=projected_orientation(21*bigstep),
-  ["M"]=projected_orientation(22*bigstep),
-  ["N"]=projected_orientation(23*bigstep),
-  ["O"]=projected_orientation(24*bigstep),
-  ["P"]=projected_orientation(25*bigstep),
-  ["Q"]=projected_orientation(26*bigstep),
-  ["R"]=projected_orientation(27*bigstep),
-  ["S"]=projected_orientation(28*bigstep),
-  ["T"]=projected_orientation(29*bigstep),
-  ["U"]=     projected_orientation(30*bigstep),
-  ["V"]=     projected_orientation(31*bigstep),
-  ["W"]=     projected_orientation(32*bigstep),
-  ["X"]=     projected_orientation(33*bigstep),
-  ["Y"]=     projected_orientation(34*bigstep),
-  ["Z"]=     projected_orientation(35*bigstep),
-  ["err"]=   projected_orientation(36*bigstep),
-  ["."]=   projected_orientation(37*bigstep),
-  ["negative"]= projected_orientation(38*bigstep), -- for negative numbers
-  ["off"]=   projected_orientation(39*bigstep),
+  ["0"]=1,
+  ["1"]=2,
+  ["2"]=3,
+  ["3"]=4,
+  ["4"]=5,
+  ["5"]=6,
+  ["6"]=7,
+  ["7"]=8,
+  ["8"]=9,
+  ["9"]=10,
+  ["A"]=11,
+  ["B"]=12,
+  ["C"]=13,
+  ["D"]=14,
+  ["E"]=15,
+  ["F"]=16,
+  ["G"]=17,
+  ["H"]=18,
+  ["I"]=19,
+  ["J"]=20,
+  ["K"]=21,
+  ["L"]=22,
+  ["M"]=23,
+  ["N"]=24,
+  ["O"]=25,
+  ["P"]=26,
+  ["Q"]=27,
+  ["R"]=28,
+  ["S"]=29,
+  ["T"]=30,
+  ["U"]=31,
+  ["V"]=32,
+  ["W"]=33,
+  ["X"]=34,
+  ["Y"]=35,
+  ["Z"]=36,
+  ["err"]=37,
+  ["."]=38,
+  ["negative"]=39, -- for negative numbers
+  ["off"]=40,
 
   --extended symbols
-  ["?"]=projected_orientation(40*bigstep),
-  ["!"]=projected_orientation(41*bigstep),
-  ["@"]=projected_orientation(42*bigstep),
-  ["["]=projected_orientation(43*bigstep),
-  ["]"]=projected_orientation(44*bigstep),
-  ["{"]=projected_orientation(45*bigstep),
-  ["}"]=projected_orientation(46*bigstep),
-  ["("]=projected_orientation(47*bigstep),
-  [")"]=projected_orientation(48*bigstep),
-  ["/"]=projected_orientation(49*bigstep),
-  ["*"]=projected_orientation(50*bigstep),
-  ["-"]=projected_orientation(51*bigstep), -- for subtraction operation
-  ["+"]=projected_orientation(52*bigstep),
+  ["?"]=41,
+  ["!"]=42,
+  ["@"]=43,
+  ["["]=44,
+  ["]"]=45,
+  ["{"]=46,
+  ["}"]=47,
+  ["("]=48,
+  [")"]=49,
+  ["/"]=50,
+  ["*"]=51,
+  ["-"]=52, -- for subtraction operation
+  ["+"]=53,
 
   }
 
@@ -175,21 +160,17 @@ local function setStates(nixie,newstates,newcolor)
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and obj.valid then
       if nixie.energy > 70 then
-        if math.abs(obj.orientation - stateOrientMap[new_state]) > 1/160 then
-          obj.orientation=stateOrientMap[new_state]
-        end
-        local color = newcolor
-        if not color then color={r=1.0,  g=0.6,  b=0.2, a=1.0} end
+        obj.graphics_variation=stateOrientMap[new_state]
+
+        local color = newcolor or {r=1.0,  g=0.6,  b=0.2, a=1.0}
+
         if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
+
         -- create and color a passenger
-        if not obj.passenger then
-          obj.passenger = obj.surface.create_entity{name="nixie-colorman", position=obj.position,force=obj.force}
-          obj.passenger.active=false
-        end
-        obj.passenger.color=color
+        obj.color=color
       else
-        if obj.orientation ~= stateOrientMap["off"] then
-          obj.orientation=stateOrientMap["off"]
+        if obj.graphics_variation ~= stateOrientMap["off"] then
+          obj.graphics_variation = stateOrientMap["off"]
         end
       end
     else
@@ -428,21 +409,21 @@ local function onPlaceEntity(event)
       --place the /real/ thing(s) at same spot
       local name, position
       if num == 1 then -- large tube, one sprite
-        name = "nixie-tube-sprite"
+        name = "nixie-tube-simple-sprite"
         position = {x=pos.x+1/32, y=pos.y+1/32}
       else
-        name = "nixie-tube-small-sprite"
+        name = "nixie-tube-simple-sprite-small"
         position = {x=pos.x-4/32+((n-1)*10/32), y=pos.y+4/32}
       end
       local sprite=surf.create_entity(
         {
-              name=name,
-              position=position,
-            force=entity.force
+          name=name,
+          position=position,
+          force=entity.force,
+          color = {r=1.0,  g=1.0,  b=1.0, a=1.0},
+          variation = stateOrientMap["off"]
         })
       sprite.active=false
-      sprite.orientation=0
-      sprite.insert({name="coal",count=1})
       sprites[n]=sprite
     end
     global.spriteobjs[entity.unit_number] = sprites
@@ -564,10 +545,10 @@ script.on_configuration_changed(function(data)
     -- and re-index the world
     for _,surf in pairs(game.surfaces) do
       -- Destroy old sprite objects
-      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-sprite"}) do
+      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-simple-sprite"}) do
         removeSpriteObj(sprite)
       end
-      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-small-sprite"}) do
+      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-simple-sprite-small"}) do
         removeSpriteObj(sprite)
       end
 
