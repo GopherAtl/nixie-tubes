@@ -162,11 +162,12 @@ local function setStates(nixie,newstates,newcolor)
       if nixie.energy > 70 then
         obj.graphics_variation=stateOrientMap[new_state]
 
-        local color = newcolor or {r=1.0,  g=0.6,  b=0.2, a=1.0}
+        -- allow keeping old color to stretch it for one cycle when updating value
+        local color = newcolor=="keepcolor" and obj.color or newcolor
+        if not color then color = {r=1.0,  g=0.6,  b=0.2, a=1.0} end
 
         if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
 
-        -- create and color a passenger
         obj.color=color
       else
         if obj.graphics_variation ~= stateOrientMap["off"] then
@@ -308,14 +309,9 @@ local function onTickController(entity)
 
   local v,changed=get_signal_value(entity)
   if v then
-    local color,updatecolor
+    local color
     local control = entity.get_or_create_control_behavior()
-    if control.use_colors then
-      color = control.color
-      --TODO: smarter fail-fast for color
-      updatecolor = true
-    end
-    if changed or updatecolor then
+    if changed or control.use_colors then
       local float = get_signal_value(entity,{name="signal-float",type="virtual"}) ~= 0
       local hex = get_signal_value(entity,{name="signal-hex",type="virtual"}) ~= 0
       local format = "%i"
@@ -331,7 +327,7 @@ local function onTickController(entity)
       end
 
       local vs = format:format(v)
-      displayValString(entity,vs,color)
+      displayValString(entity,vs,changed and "keepcolor" or control.color)
     end
   else
     displayValString(entity)
