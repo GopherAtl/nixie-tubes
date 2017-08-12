@@ -327,7 +327,11 @@ local function onTickController(entity)
       end
 
       local vs = format:format(v)
-      displayValString(entity,vs,changed and "keepcolor" or control.color)
+      if control.use_colors then
+        displayValString(entity,vs,changed and "keepcolor" or control.color)
+      else
+        displayValString(entity,vs,nil)
+      end
     end
   else
     displayValString(entity)
