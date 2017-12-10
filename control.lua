@@ -188,12 +188,7 @@ local function get_signal_value(entity,sig)
 	local condition = behavior.circuit_condition
 	if condition == nil then return nil end
 
-  -- shortcut, return stored value if unchanged
-  if not sig and condition.fulfilled and condition.condition.comparator=="=" then
-    return condition.condition.constant,false
-  end
-
-	local signal
+  local signal
   if sig then
     signal = sig
   else
@@ -217,14 +212,15 @@ local function get_signal_value(entity,sig)
 
 	local val = redval + greenval
 
-  if not sig then
-    condition.condition.comparator="="
-    condition.condition.constant=val
+  if not sig and not condition.fulfilled then
+    -- use >= MININT32 to ensure always-on
+    condition.condition.comparator="≥"
+    condition.condition.constant=-0x80000000
     condition.condition.second_signal=nil
     behavior.circuit_condition = condition
   end
 
-  return val,true
+  return val
 end
 
 local validEntityName = {
@@ -307,32 +303,27 @@ local function onTickController(entity)
     return
   end
 
-  local v,changed=get_signal_value(entity)
+  local v = get_signal_value(entity)
   if v then
     local color
     local control = entity.get_or_create_control_behavior()
-    if changed or control.use_colors then
-      local float = get_signal_value(entity,{name="signal-float",type="virtual"}) ~= 0
-      local hex = get_signal_value(entity,{name="signal-hex",type="virtual"}) ~= 0
-      local format = "%i"
-      if float and hex then
-        format = "%A"
-        v = float_from_int(v)
-      elseif hex then
-        format = "%X"
-        if v < 0 then v = v + 0x100000000 end
-      elseif float then
-        format = "%G"
-        v = float_from_int(v)
-      end
 
-      local vs = format:format(v)
-      if control.use_colors then
-        displayValString(entity,vs,changed and "keepcolor" or control.color)
-      else
-        displayValString(entity,vs,nil)
-      end
+    local float = get_signal_value(entity,{name="signal-float",type="virtual"}) ~= 0
+    local hex = get_signal_value(entity,{name="signal-hex",type="virtual"}) ~= 0
+    local format = "%i"
+    if float and hex then
+      format = "%A"
+      v = float_from_int(v)
+    elseif hex then
+      format = "%X"
+      if v < 0 then v = v + 0x100000000 end
+    elseif float then
+      format = "%G"
+      v = float_from_int(v)
     end
+
+    displayValString(entity,format:format(v),control.use_colors and control.color)
+
   else
     displayValString(entity)
   end
