@@ -17,6 +17,7 @@ data:extend{
     type = "item",
     name = "nixie-tube",
     icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
+    icon_size = 32,
     flags = {"goes-to-quickbar"},
     subgroup = "circuit-network",
     order = "c-a",
@@ -27,6 +28,7 @@ data:extend{
     type = "lamp",
     name = "nixie-tube",
     icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
+    icon_size = 32,
     flags = {"placeable-neutral","player-creation", "not-on-map"},
     minable = {hardness = 0.2, mining_time = 0.5, result = "nixie-tube"},
     max_health = 55,
@@ -70,7 +72,9 @@ data:extend{
         green = {12/32, 28/32},
       }
     },
-    circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
+    --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
+    circuit_wire_connection_point = circuit_connector_definitions["lamp"].points,
+    circuit_connector_sprites = circuit_connector_definitions["lamp"].sprites,
     circuit_wire_max_distance = 7.5
   },
 
@@ -91,6 +95,7 @@ data:extend{
     type = "item",
     name = "nixie-tube-alpha",
     icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
+    icon_size = 32,
     flags = {"goes-to-quickbar"},
     subgroup = "circuit-network",
     order = "c-a",
@@ -101,6 +106,7 @@ data:extend{
     type = "lamp",
     name = "nixie-tube-alpha",
     icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
+    icon_size = 32,
     flags = {"placeable-neutral","player-creation", "not-on-map"},
     minable = {hardness = 0.2, mining_time = 0.5, result = "nixie-tube-alpha"},
     max_health = 55,
@@ -144,7 +150,9 @@ data:extend{
         green = {12/32, 28/32},
       }
     },
-    circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
+    --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
+    circuit_wire_connection_point = circuit_connector_definitions["lamp"].points,
+    circuit_connector_sprites = circuit_connector_definitions["lamp"].sprites,
     circuit_wire_max_distance = 7.5
   },
 
@@ -165,6 +173,7 @@ data:extend{
     type = "item",
     name = "nixie-tube-small",
     icon = "__nixie-tubes__/graphics/nixie-small-base-icon.png",
+    icon_size = 32,
     flags = {"goes-to-quickbar"},
     subgroup = "circuit-network",
     order = "c-a",
@@ -175,6 +184,7 @@ data:extend{
     type = "lamp",
     name = "nixie-tube-small",
     icon = "__nixie-tubes__/graphics/nixie-small-base-icon.png",
+    icon_size = 32,
     flags = {"placeable-neutral","player-creation", "not-on-map"},
     minable = {hardness = 0.2, mining_time = 0.5, result = "nixie-tube-small"},
     max_health = 40,
@@ -222,7 +232,9 @@ data:extend{
 
     circuit_wire_max_distance = 7.5,
 
-    circuit_connector_sprites = get_circuit_connector_sprites({4/32, 11/32}, {4/32, 11/32}, 18),
+    --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 11/32}, {4/32, 11/32}, 18),
+    circuit_wire_connection_point = circuit_connector_definitions["lamp"].points,
+    circuit_connector_sprites = circuit_connector_definitions["lamp"].sprites,
   },
 
   {
@@ -230,6 +242,7 @@ data:extend{
     name = "nixie-tube-simple-sprite",
     render_layer = "higher-object-above",
     icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
+    icon_size = 32,
     flags = {"placeable-neutral", "placeable-off-grid", "player-creation"},
     order = "s-e-w-o",
     --minable = false,
@@ -259,6 +272,7 @@ data:extend{
     name = "nixie-tube-simple-sprite-small",
     render_layer = "higher-object-above",
     icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
+    icon_size = 32,
     flags = {"placeable-neutral", "placeable-off-grid", "player-creation"},
     order = "s-e-w-o",
     --minable = false,
