@@ -2,7 +2,8 @@ circuit_connector_definitions["nixie"] = circuit_connector_definitions.create
 (
   universal_connector_template,
   {
-    { variation = 26, main_offset = util.by_pixel(4.5, 7.5), shadow_offset = util.by_pixel(3.5, 7.5), show_shadow = true },
+    --{ variation = 26, main_offset = util.by_pixel(4.5, 7.5), shadow_offset = util.by_pixel(3.5, 7.5), show_shadow = true },
+    { variation = 26, main_offset = util.by_pixel(2.5, 18.0), shadow_offset = util.by_pixel(2.0, 18.0), show_shadow = true },
   }
 )
 
@@ -10,7 +11,7 @@ circuit_connector_definitions["nixie-small"] = circuit_connector_definitions.cre
 (
   universal_connector_template,
   {
-    { variation = 26, main_offset = util.by_pixel(4.5, 7.5), shadow_offset = util.by_pixel(3.5, 7.5), show_shadow = true },
+    { variation = 26, main_offset = util.by_pixel(2.5, 10.0), shadow_offset = util.by_pixel(2.0, 10.0), show_shadow = true },
   }
 )
 
@@ -89,7 +90,6 @@ data:extend{
         green = {12/32, 28/32},
       }
     },
-    --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
     circuit_wire_connection_point = circuit_connector_definitions["nixie"].points,
     circuit_connector_sprites = circuit_connector_definitions["nixie"].sprites,
     circuit_wire_max_distance = 7.5
@@ -167,7 +167,6 @@ data:extend{
         green = {12/32, 28/32},
       }
     },
-    --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
     circuit_wire_connection_point = circuit_connector_definitions["nixie"].points,
     circuit_connector_sprites = circuit_connector_definitions["nixie"].sprites,
     circuit_wire_max_distance = 7.5
@@ -246,10 +245,8 @@ data:extend{
         green = {12/32, 18/32},
       }
     },
-
     circuit_wire_max_distance = 7.5,
 
-    --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 11/32}, {4/32, 11/32}, 18),
     circuit_wire_connection_point = circuit_connector_definitions["nixie-small"].points,
     circuit_connector_sprites = circuit_connector_definitions["nixie-small"].sprites,
   },
