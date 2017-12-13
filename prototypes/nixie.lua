@@ -1,3 +1,20 @@
+circuit_connector_definitions["nixie"] = circuit_connector_definitions.create
+(
+  universal_connector_template,
+  {
+    { variation = 26, main_offset = util.by_pixel(4.5, 7.5), shadow_offset = util.by_pixel(3.5, 7.5), show_shadow = true },
+  }
+)
+
+circuit_connector_definitions["nixie-small"] = circuit_connector_definitions.create
+(
+  universal_connector_template,
+  {
+    { variation = 26, main_offset = util.by_pixel(4.5, 7.5), shadow_offset = util.by_pixel(3.5, 7.5), show_shadow = true },
+  }
+)
+
+
 data:extend{
 
   -- original 2x1 tile one-digit nixie tube
@@ -39,7 +56,7 @@ data:extend{
     energy_source =
     {
       type = "electric",
-      usage_priority = "secondary-input",
+      usage_priority = "lamp",
     },
     energy_usage_per_tick = "4KW",
     light = {intensity = 0.0, size = 0, color = {r=1, g=.6, b=.3, a=0}},
@@ -73,8 +90,8 @@ data:extend{
       }
     },
     --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
-    circuit_wire_connection_point = circuit_connector_definitions["lamp"].points,
-    circuit_connector_sprites = circuit_connector_definitions["lamp"].sprites,
+    circuit_wire_connection_point = circuit_connector_definitions["nixie"].points,
+    circuit_connector_sprites = circuit_connector_definitions["nixie"].sprites,
     circuit_wire_max_distance = 7.5
   },
 
@@ -151,8 +168,8 @@ data:extend{
       }
     },
     --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 21/32}, {4/32, 21/32}, 18),
-    circuit_wire_connection_point = circuit_connector_definitions["lamp"].points,
-    circuit_connector_sprites = circuit_connector_definitions["lamp"].sprites,
+    circuit_wire_connection_point = circuit_connector_definitions["nixie"].points,
+    circuit_connector_sprites = circuit_connector_definitions["nixie"].sprites,
     circuit_wire_max_distance = 7.5
   },
 
@@ -233,8 +250,8 @@ data:extend{
     circuit_wire_max_distance = 7.5,
 
     --circuit_connector_sprites = get_circuit_connector_sprites({4/32, 11/32}, {4/32, 11/32}, 18),
-    circuit_wire_connection_point = circuit_connector_definitions["lamp"].points,
-    circuit_connector_sprites = circuit_connector_definitions["lamp"].sprites,
+    circuit_wire_connection_point = circuit_connector_definitions["nixie-small"].points,
+    circuit_connector_sprites = circuit_connector_definitions["nixie-small"].sprites,
   },
 
   {

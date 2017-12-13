@@ -159,23 +159,36 @@ local function setStates(nixie,newstates,newcolor)
     if not new_state then new_state = "off" end
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and obj.valid then
-      if nixie.energy > 70 then
+      --if nixie.energy > 70 then
         obj.graphics_variation=stateOrientMap[new_state]
 
         -- allow keeping old color to stretch it for one cycle when updating value
-        local color = newcolor=="keepcolor" and obj.color or newcolor
-        if not color then color = {r=1.0,  g=0.6,  b=0.2, a=1.0} end
 
-        if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
+        local color = newcolor
+        if color=="keepcolor" then
+          --game.print("keepcolor")
+          color = obj.color
+        end
+
+        if not color then
+          --game.print("nocolor")
+          color = {r=1.0,  g=0.6,  b=0.2, a=1.0}
+        end
+
+        if new_state == "off" then
+          --game.print("offcolor")
+          color={r=1.0,  g=1.0,  b=1.0, a=1.0}
+        end
 
         obj.color=color
-      else
-        if obj.graphics_variation ~= stateOrientMap["off"] then
-          obj.graphics_variation = stateOrientMap["off"]
-        end
-      end
+      --else
+      --  game.print("nopower")
+      --  if obj.graphics_variation ~= stateOrientMap["off"] then
+      --    obj.graphics_variation = stateOrientMap["off"]
+      --  end
+      --end
     else
-      game.print("invalid nixie?")
+      game.print("invalid nixie sprite for " .. nixie.unit_number)
     end
   end
 end
@@ -183,10 +196,14 @@ end
 -- from binbinhfr/SmartDisplay, modified to check both wires and add them
 local function get_signal_value(entity,sig)
 	local behavior = entity.get_control_behavior()
-	if behavior == nil then	return nil end
+	if behavior == nil then
+    return nil
+  end
 
 	local condition = behavior.circuit_condition
-	if condition == nil then return nil end
+	if condition == nil then
+    return nil
+  end
 
   local signal
   if sig then
@@ -195,7 +212,9 @@ local function get_signal_value(entity,sig)
     signal = condition.condition.first_signal
   end
 
-	if signal == nil or signal.name == nil then return(nil)	end
+	if signal == nil or signal.name == nil then
+    return(nil)
+  end
 
 	local redval,greenval=0,0
 
@@ -231,16 +250,17 @@ local validEntityName = {
 
 local function displayValString(entity,vs,color)
 
-  if not (entity and entity.valid) then return end
-
   local nextdigit = global.nextdigit[entity.unit_number]
   local chcount = #global.spriteobjs[entity.unit_number]
 
   if not vs then
+    --game.print("off")
     setStates(entity,(chcount==1) and {"off"} or {"off","off"})
   elseif #vs < chcount then
+    --game.print("pastend")
     setStates(entity,{"off",vs},color)
   elseif #vs >= chcount then
+    --game.print("digit " .. serpent.line(color))
     setStates(entity,(chcount==1) and {vs:sub(-1)} or {vs:sub(-2,-2),vs:sub(-1)},color)
   end
 
@@ -298,18 +318,15 @@ local function getAlphaSignals(entity,wire_type,charsig)
 end
 
 local function onTickController(entity)
-  if not entity.valid then
-    onRemoveEntity(entity)
-    return
-  end
-
   local v = get_signal_value(entity)
+  --game.print("got v=" .. (v or "nil"))
   if v then
-    local color
     local control = entity.get_or_create_control_behavior()
 
     local float = get_signal_value(entity,{name="signal-float",type="virtual"}) ~= 0
+    --game.print("float=" .. (float and "true" or "false"))
     local hex = get_signal_value(entity,{name="signal-hex",type="virtual"}) ~= 0
+    --game.print("hex=" .. (hex and "true" or "false"))
     local format = "%i"
     if float and hex then
       format = "%A"
@@ -367,21 +384,42 @@ local function onTick(event)
   for _=1, settings.global["nixie-tube-update-speed-numeric"].value do
     local nixie
     if global.next_controller and not global.controllers[global.next_controller] then
-      game.print("Invalid next_controller??")
+      game.print("Invalid next_controller " .. global.next_controller)
       global.next_controller=nil
     end
+
     global.next_controller,nixie = next(global.controllers,global.next_controller)
-    if nixie then onTickController(nixie) end
+
+    if nixie then
+      if nixie.valid then
+        --game.print("Updating Nixie " .. global.next_controller)
+        onTickController(nixie)
+      else
+        game.print("remvoing damaged nixie tube " .. global.next_controller)
+        global.controllers[global.next_controller] = nil
+        global.next_controller = nil
+      end
+    end
   end
 
   for _=1, settings.global["nixie-tube-update-speed-alpha"].value do
     local nixie
     if global.next_alpha and not global.alphas[global.next_alpha] then
-      game.print("Invalid next_alpha??")
+      game.print("Invalid next_alpha " .. global.next_alpha)
       global.next_alpha=nil
     end
     global.next_alpha,nixie = next(global.alphas,global.next_alpha)
-    if nixie then onTickAlpha(nixie) end
+
+    if nixie then
+      if nixie.valid then
+        --game.print("Updating Nixie " .. global.next_alpha)
+        onTickAlpha(nixie)
+      else
+        game.print("remvoing damaged nixie tube " .. global.next_alpha)
+        global.alphas[global.next_alpha] = nil
+        global.next_alpha = nil
+      end
+    end
   end
 end
 
@@ -392,6 +430,7 @@ local function onPlaceEntity(event)
 
   local num = validEntityName[entity.name]
   if num then
+    --game.print("found nixie " .. entity.unit_number)
     local pos=entity.position
     local surf=entity.surface
 
@@ -437,7 +476,7 @@ local function onPlaceEntity(event)
         name=entity.name}
       for _,n in pairs(neighbors) do
         if n.valid then
-
+          --game.print(entity.unit_number .. " found neighbor left " .. n.unit_number)
           if global.next_controller == n.unit_number then
             -- if it's currently the *next* controller, claim that too...
             global.next_controller = entity.unit_number
@@ -456,6 +495,7 @@ local function onPlaceEntity(event)
       local foundright=false
       for _,n in pairs(neighbors) do
         if n.valid then
+          --game.print(entity.unit_number .. " found neighbor right " .. n.unit_number)
           foundright=true
           global.nextdigit[n.unit_number]=entity
         end
@@ -561,14 +601,3 @@ script.on_event(defines.events.on_robot_pre_mined, function(event) onRemoveEntit
 script.on_event(defines.events.on_entity_died, function(event) onRemoveEntity(event.entity) end)
 
 script.on_event(defines.events.on_tick, onTick)
-
-script.on_event(defines.events.on_player_driving_changed_state,
-    function(event)
-      local player=game.players[event.player_index]
-      if player.vehicle and
-        (player.vehicle.name=="nixie-tube-sprite" or
-          player.vehicle.name=="nixie-tube-small-sprite") then
-        player.vehicle.passenger=nil
-      end
-    end
-  )
