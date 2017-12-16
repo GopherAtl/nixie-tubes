@@ -265,10 +265,15 @@ local function displayValString(entity,vs,color)
   end
 
   if nextdigit then
-    if vs and #vs>chcount then
-      displayValString(nextdigit,vs:sub(1,-(chcount+1)),color)
+    if nextdigit.valid then
+      if vs and #vs>chcount then
+        displayValString(nextdigit,vs:sub(1,-(chcount+1)),color)
+      else
+        displayValString(nextdigit)
+      end
     else
-      displayValString(nextdigit)
+      --when a nixie in the middle is removed, it doesn't have the unit_number to it's right to remove itself
+      global.nextdigit[entity.unit_number] = nil
     end
   end
 end
@@ -535,6 +540,7 @@ local function onRemoveEntity(entity)
       global.alphas[entity.unit_number]=nil
 
       --if I had a next-digit, register it as a controller
+      --if i *was* a next-digit, i'll be unlinked next time around
       local nextdigit = global.nextdigit[entity.unit_number]
       if nextdigit and nextdigit.valid then
         global.controllers[nextdigit.unit_number] = nextdigit
