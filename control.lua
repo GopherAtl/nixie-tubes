@@ -159,7 +159,7 @@ local function setStates(nixie,newstates,newcolor)
     if not new_state then new_state = "off" end
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and obj.valid then
-      --if nixie.energy > 70 then
+      if nixie.energy > 70 then
         obj.graphics_variation=stateOrientMap[new_state]
 
         -- allow keeping old color to stretch it for one cycle when updating value
@@ -181,12 +181,13 @@ local function setStates(nixie,newstates,newcolor)
         end
 
         obj.color=color
-      --else
+      else
       --  game.print("nopower")
-      --  if obj.graphics_variation ~= stateOrientMap["off"] then
-      --    obj.graphics_variation = stateOrientMap["off"]
-      --  end
-      --end
+        if obj.graphics_variation ~= stateOrientMap["off"] then
+          obj.graphics_variation = stateOrientMap["off"]
+        end
+        obj.color={r=1.0,  g=1.0,  b=1.0, a=1.0}
+      end
     else
       game.print("invalid nixie sprite for " .. nixie.unit_number)
     end
