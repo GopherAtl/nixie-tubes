@@ -1,12 +1,12 @@
 -- luacheck: globals global settings game defines script
 
-local function removeSpriteObj(obj)
+function removeSpriteObj(obj)
   if obj.valid then
     obj.destroy()
   end
 end
 
-local function removeSpriteObjs(nixie)
+function removeSpriteObjs(nixie)
   for _,obj in pairs(global.spriteobjs[nixie.unit_number]) do
     removeSpriteObj(obj)
   end
@@ -128,7 +128,7 @@ local signalCharMap = {
   ["signal-plus"]="+",
 }
 
-local function RegisterStrings()
+function RegisterStrings()
   if remote.interfaces['signalstrings'] and remote.interfaces['signalstrings']['register_signal'] then
     local syms = {
       ["signal-stop"] = ".",
@@ -152,9 +152,18 @@ local function RegisterStrings()
   end
 end
 
+function RegisterPicker()
+  if remote.interfaces["picker"] and remote.interfaces["picker"]["dolly_moved_entity_id"] then
+    script.on_event(remote.call("picker", "dolly_moved_entity_id"), function(event)
+      onRemoveEntity(event.moved_entity)
+      onPlaceEntity({created_entity=event.moved_entity})
+    end)
+  end
+end
+
 
 --sets the state(s) and update the sprite for a nixie
-local function setStates(nixie,newstates,newcolor)
+function setStates(nixie,newstates,newcolor)
   for key,new_state in pairs(newstates) do
     if not new_state then new_state = "off" end
     local obj = global.spriteobjs[nixie.unit_number][key]
@@ -195,7 +204,7 @@ local function setStates(nixie,newstates,newcolor)
 end
 
 -- from binbinhfr/SmartDisplay, modified to check both wires and add them
-local function get_signal_value(entity,sig)
+function get_signal_value(entity,sig)
 	local behavior = entity.get_control_behavior()
 	if behavior == nil then
     return nil
@@ -249,7 +258,7 @@ local validEntityName = {
   ['nixie-tube-small'] = 2
 }
 
-local function displayValString(entity,vs,color)
+function displayValString(entity,vs,color)
 
   local nextdigit = global.nextdigit[entity.unit_number]
   local chcount = #global.spriteobjs[entity.unit_number]
@@ -279,7 +288,7 @@ local function displayValString(entity,vs,color)
   end
 end
 
-local function float_from_int(i)
+function float_from_int(i)
   local sign = bit32.btest(i,0x80000000) and -1 or 1
   local exponent = bit32.rshift(bit32.band(i,0x7F800000),23)-127
   local significand = bit32.band(i,0x007FFFFF)
@@ -303,7 +312,7 @@ local function float_from_int(i)
   return sign * math.ldexp(bit32.bor(significand,0x00800000),exponent-23) --[[normal numbers]]
 end
 
-local function getAlphaSignals(entity,wire_type,charsig)
+function getAlphaSignals(entity,wire_type,charsig)
   local net = entity.get_circuit_network(wire_type)
 
   local ch = charsig
@@ -323,7 +332,7 @@ local function getAlphaSignals(entity,wire_type,charsig)
   return ch,co
 end
 
-local function onTickController(entity)
+function onTickController(entity)
   local v = get_signal_value(entity)
   --game.print("got v=" .. (v or "nil"))
   if v then
@@ -352,7 +361,7 @@ local function onTickController(entity)
   end
 end
 
-local function onTickAlpha(entity)
+function onTickAlpha(entity)
   if not entity then return end
 
   if not entity.valid then
@@ -385,7 +394,7 @@ local function onTickAlpha(entity)
 end
 
 
-local function onTick(event)
+function onTick(event)
 
   for _=1, settings.global["nixie-tube-update-speed-numeric"].value do
     local nixie
@@ -429,7 +438,7 @@ local function onTick(event)
   end
 end
 
-local function onPlaceEntity(event)
+function onPlaceEntity(event)
 
   local entity=event.created_entity
   if not entity.valid then return end
@@ -513,7 +522,7 @@ local function onPlaceEntity(event)
   end
 end
 
-local function onRemoveEntity(entity)
+function onRemoveEntity(entity)
   if entity.valid then
     if validEntityName[entity.name] then
       removeSpriteObjs(entity)
@@ -541,11 +550,18 @@ local function onRemoveEntity(entity)
       global.alphas[entity.unit_number]=nil
 
       --if I had a next-digit, register it as a controller
-      --if i *was* a next-digit, i'll be unlinked next time around
+      --if i was a next-digit, unlink
       local nextdigit = global.nextdigit[entity.unit_number]
       if nextdigit and nextdigit.valid then
         global.controllers[nextdigit.unit_number] = nextdigit
         displayValString(nextdigit)
+        global.nextdigit[entity.unit_number] = nil
+      end
+      for k,v in pairs(global.nextdigit) do
+        if v == entity then
+          global.nextdigit[k] = nil
+          break
+        end
       end
 
     end
@@ -559,10 +575,12 @@ script.on_init(function()
   global.nextdigit = {}
 
   RegisterStrings()
+  RegisterPicker()
 end)
 
 script.on_load(function()
   RegisterStrings()
+  RegisterPicker()
 end)
 
 script.on_configuration_changed(function(data)

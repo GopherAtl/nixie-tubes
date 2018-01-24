@@ -257,13 +257,13 @@ data:extend{
     render_layer = "higher-object-above",
     icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
     icon_size = 32,
-    flags = {"placeable-neutral", "placeable-off-grid", "player-creation"},
+    flags = {"placeable-neutral", "placeable-off-grid"},
     order = "s-e-w-o",
     --minable = false,
     max_health = 100,
     corpse = "small-remnants",
-    collision_box = {{-0.1, -.1}, {.1,.1}},
-    selection_box = {{0,0}, {0,0}},
+    collision_box = nil,
+    selection_box = nil,
     pictures =
     {
       sheet =
@@ -287,13 +287,13 @@ data:extend{
     render_layer = "higher-object-above",
     icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
     icon_size = 32,
-    flags = {"placeable-neutral", "placeable-off-grid", "player-creation"},
+    flags = {"placeable-neutral", "placeable-off-grid"},
     order = "s-e-w-o",
     --minable = false,
     max_health = 100,
     corpse = "small-remnants",
-    collision_box = {{-0.1, -.1}, {.1,.1}},
-    selection_box = {{0,0}, {0,0}},
+    collision_box = nil,
+    selection_box = nil,
     pictures =
     {
       sheet =
