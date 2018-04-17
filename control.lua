@@ -69,6 +69,7 @@ local stateOrientMap =
   ["*"]=51,
   ["-"]=52, -- for subtraction operation
   ["+"]=53,
+  ["%"]=54,
 
   }
 
@@ -126,6 +127,7 @@ local signalCharMap = {
   ["signal-asterisk"]="*",
   ["signal-minus"]="-",
   ["signal-plus"]="+",
+  ["signal-percent"]="%",
 }
 
 function RegisterStrings()
@@ -145,6 +147,7 @@ function RegisterStrings()
       ["signal-asterisk"]="*",
       ["signal-minus"]="-",
       ["signal-plus"]="+",
+	  ["signal-percent"]="%",
     }
     for name,char in pairs(syms) do
       remote.call('signalstrings','register_signal',name,char)

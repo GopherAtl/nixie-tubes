@@ -43,6 +43,7 @@ create_symsignal("slash",'d')
 create_symsignal("asterisk",'d')
 create_symsignal("minus",'d')
 create_symsignal("plus",'d')
+create_symsignal("percent", 'd')
 
 create_symsignal("float",'x')
 create_symsignal("hex",'x')
