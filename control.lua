@@ -495,6 +495,9 @@ script.on_configuration_changed(function(data)
       nextdigit = {},
     }
 
+    -- wipe out any lingering sprites i've just deleted the references to...
+    rendering.clear("nixie-tubes")
+
     -- and re-index the world
     for _,surf in pairs(game.surfaces) do
       -- re-index all nixies. non-nixie lamps will be ignored by onPlaceEntity
