@@ -206,9 +206,8 @@ function setStates(nixie,newstates,newcolor)
   end
 end
 
--- from binbinhfr/SmartDisplay, modified to check both wires and add them
-function get_signal_value(entity,sig)
-	local behavior = entity.get_control_behavior()
+function get_selected_signal(entity)
+  local behavior = entity.get_control_behavior()
 	if behavior == nil then
     return nil
   end
@@ -218,33 +217,8 @@ function get_signal_value(entity,sig)
     return nil
   end
 
-  local signal
-  if sig then
-    signal = sig
-  else
-    signal = condition.condition.first_signal
-  end
-
-	if signal == nil or signal.name == nil then
-    return(nil)
-  end
-
-	local redval,greenval=0,0
-
-	local network = entity.get_circuit_network(defines.wire_type.red)
-	if network then
-	  redval = network.get_signal(signal)
-	end
-
-	network = entity.get_circuit_network(defines.wire_type.green)
-	if network then
-	  greenval = network.get_signal(signal)
-	end
-
-
-	local val = redval + greenval
-
-  if not sig and not condition.fulfilled then
+  local signal = condition.condition.first_signal
+  if signal and not condition.fulfilled then
     -- use >= MININT32 to ensure always-on
     condition.condition.comparator="≥"
     condition.condition.constant=-0x80000000
@@ -252,7 +226,16 @@ function get_signal_value(entity,sig)
     behavior.circuit_condition = condition
   end
 
-  return val
+  return signal
+end
+
+function get_signal_from_set(signal,set)
+  for _,sig in pairs(set) do
+    if sig.signal.type == signal.type and sig.signal.name == signal.name then
+      return sig.count
+    end
+  end
+  return nil
 end
 
 local validEntityName = {
@@ -260,6 +243,9 @@ local validEntityName = {
   ['nixie-tube-alpha'] = 1,
   ['nixie-tube-small'] = 2
 }
+
+local sigFloat = {name="signal-float",type="virtual"}
+local sigHex = {name="signal-hex",type="virtual"}
 
 function displayValString(entity,vs,color)
 
@@ -315,13 +301,12 @@ function float_from_int(i)
   return sign * math.ldexp(bit32.bor(significand,0x00800000),exponent-23) --[[normal numbers]]
 end
 
-function getAlphaSignals(entity,wire_type,charsig)
-  local net = entity.get_circuit_network(wire_type)
+function getAlphaSignals(entity)
+  local signals = entity.get_merged_signals()
+  local ch = nil
 
-  local ch = charsig
-
-  if net and net.signals and #net.signals > 0 then
-    for _,s in pairs(net.signals) do
+  if signals and #signals > 0 then
+    for _,s in pairs(signals) do
       if signalCharMap[s.signal.name] then
         if ch then
           ch = "err"
@@ -332,33 +317,36 @@ function getAlphaSignals(entity,wire_type,charsig)
     end
   end
 
-  return ch,co
+  return ch
 end
 
 function onTickController(entity)
-  local v = get_signal_value(entity)
-  --game.print("got v=" .. (v or "nil"))
-  if v then
-    local control = entity.get_or_create_control_behavior()
+  local signals = entity.get_merged_signals()
+  if signals then
+    local v = get_signal_from_set(get_selected_signal(entity),signals)
+    --game.print("got v=" .. (v or "nil"))
+    if v then
+      local control = entity.get_or_create_control_behavior()
 
-    local float = get_signal_value(entity,{name="signal-float",type="virtual"}) ~= 0
-    --game.print("float=" .. (float and "true" or "false"))
-    local hex = get_signal_value(entity,{name="signal-hex",type="virtual"}) ~= 0
-    --game.print("hex=" .. (hex and "true" or "false"))
-    local format = "%i"
-    if float and hex then
-      format = "%A"
-      v = float_from_int(v)
-    elseif hex then
-      format = "%X"
-      if v < 0 then v = v + 0x100000000 end
-    elseif float then
-      format = "%G"
-      v = float_from_int(v)
+      local float = (get_signal_from_set(sigFloat,signals) or 0 ) ~= 0
+      local hex = (get_signal_from_set(sigHex,signals) or 0 ) ~= 0
+      local format = "%i"
+      if float and hex then
+        format = "%A"
+        v = float_from_int(v)
+      elseif hex then
+        format = "%X"
+        if v < 0 then v = v + 0x100000000 end
+      elseif float then
+        format = "%G"
+        v = float_from_int(v)
+      end
+
+      displayValString(entity,format:format(v),control.use_colors and control.color)
+
+    else
+      displayValString(entity)
     end
-
-    displayValString(entity,format:format(v),control.use_colors and control.color)
-
   else
     displayValString(entity)
   end
@@ -372,11 +360,7 @@ function onTickAlpha(entity)
     return
   end
 
-  local charsig = nil
-
-  charsig=getAlphaSignals(entity,defines.wire_type.red,  charsig)
-  charsig=getAlphaSignals(entity,defines.wire_type.green,charsig)
-  charsig = charsig or "off"
+  local charsig = getAlphaSignals(entity) or "off"
 
   local color
   local control = entity.get_or_create_control_behavior()
