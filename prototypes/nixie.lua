@@ -247,70 +247,85 @@ data:extend{
     circuit_wire_connection_point = circuit_connector_definitions["nixie-small"].points,
     circuit_connector_sprites = circuit_connector_definitions["nixie-small"].sprites,
   },
-
-  {
-    type = "simple-entity-with-owner",
-    name = "nixie-tube-simple-sprite",
-    render_layer = "higher-object-above",
-    icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
-    icon_size = 32,
-    flags = {"placeable-neutral", "placeable-off-grid"},
-    order = "s-e-w-o",
-    --minable = false,
-    max_health = 100,
-    corpse = "small-remnants",
-    collision_box = nil,
-    selection_box = nil,
-    pictures =
-    {
-      sheet =
-      {
-        filename = "__nixie-tubes__/graphics/nixie-chars-mono.png",
-        line_length = 10,
-        width = 20,
-        height = 44,
-        variation_count = 80,
-        apply_runtime_tint = true,
-        axially_symmetrical = false,
-        direction_count = 1,
-        shift = {-5/32,-7/32},
-      },
-    }
-  },
-
-  {
-    type = "simple-entity-with-owner",
-    name = "nixie-tube-simple-sprite-small",
-    render_layer = "higher-object-above",
-    icon = "__nixie-tubes__/graphics/nixie-alpha-base-icon.png",
-    icon_size = 32,
-    flags = {"placeable-neutral", "placeable-off-grid"},
-    order = "s-e-w-o",
-    --minable = false,
-    max_health = 100,
-    corpse = "small-remnants",
-    collision_box = nil,
-    selection_box = nil,
-    pictures =
-    {
-      sheet =
-      {
-        filename = "__nixie-tubes__/graphics/nixie-chars-mono.png",
-        line_length = 10,
-        width = 20,
-        height = 44,
-        variation_count = 80,
-        apply_runtime_tint = true,
-        axially_symmetrical = false,
-        direction_count = 1,
-        shift = {-5/32,-7/32},
-        scale = 0.5,
-      },
-    }
-  },
 }
 
--- still present for loading old saves
-local colorman = table.deepcopy(data.raw['player']['player'])
-colorman.name = "nixie-colorman"
-data:extend{colorman}
+function nixie_sprite(char,xoffset,yoffset)
+  return   {
+      type = "sprite",
+      name = "nixie-tube-sprite-" .. char,
+      filename = "__nixie-tubes__/graphics/nixie-chars-mono.png",
+      x = xoffset * 20,
+      y = yoffset * 44,
+      width = 20,
+      height = 44,
+      apply_runtime_tint = true,
+      shift = {-5/32,-7/32},
+    }
+end
+
+local spritelist =
+  {
+  ["0"]={x=0,y=0},
+  ["1"]={x=1,y=0},
+  ["2"]={x=2,y=0},
+  ["3"]={x=3,y=0},
+  ["4"]={x=4,y=0},
+  ["5"]={x=5,y=0},
+  ["6"]={x=6,y=0},
+  ["7"]={x=7,y=0},
+  ["8"]={x=8,y=0},
+  ["9"]={x=9,y=0},
+  ["A"]={x=0,y=1},
+  ["B"]={x=1,y=1},
+  ["C"]={x=2,y=1},
+  ["D"]={x=3,y=1},
+  ["E"]={x=4,y=1},
+  ["F"]={x=5,y=1},
+  ["G"]={x=6,y=1},
+  ["H"]={x=7,y=1},
+  ["I"]={x=8,y=1},
+  ["J"]={x=9,y=1},
+  ["K"]={x=0,y=2},
+  ["L"]={x=1,y=2},
+  ["M"]={x=2,y=2},
+  ["N"]={x=3,y=2},
+  ["O"]={x=4,y=2},
+  ["P"]={x=5,y=2},
+  ["Q"]={x=6,y=2},
+  ["R"]={x=7,y=2},
+  ["S"]={x=8,y=2},
+  ["T"]={x=9,y=2},
+  ["U"]={x=0,y=3},
+  ["V"]={x=1,y=3},
+  ["W"]={x=2,y=3},
+  ["X"]={x=3,y=3},
+  ["Y"]={x=4,y=3},
+  ["Z"]={x=5,y=3},
+  ["err"]={x=6,y=3},
+  ["dot"]={x=7,y=3},
+  ["negative"]={x=8,y=3}, -- for negative numbers
+  ["off"]={x=9,y=3},
+
+  --extended symbols
+  ["?"]={x=0,y=4},
+  ["!"]={x=1,y=4},
+  ["@"]={x=2,y=4},
+  ["["]={x=3,y=4},
+  ["]"]={x=4,y=4},
+  ["{"]={x=5,y=4},
+  ["}"]={x=6,y=4},
+  ["("]={x=7,y=4},
+  [")"]={x=8,y=4},
+  ["/"]={x=9,y=4},
+  ["*"]={x=0,y=5},
+  ["-"]={x=1,y=5}, -- for subtraction operation
+  ["+"]={x=2,y=5},
+  ["%"]={x=3,y=5},
+
+  }
+
+for ch,offset in pairs(spritelist) do
+  data:extend{
+    nixie_sprite(ch,offset.x,offset.y)
+  }
+end

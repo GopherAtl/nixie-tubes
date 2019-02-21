@@ -1,78 +1,4 @@
 -- luacheck: globals global settings game defines script
-
-function removeSpriteObj(obj)
-  if obj.valid then
-    obj.destroy()
-  end
-end
-
-function removeSpriteObjs(nixie)
-  for _,obj in pairs(global.spriteobjs[nixie.unit_number]) do
-    removeSpriteObj(obj)
-  end
-end
-
-local stateOrientMap =
-  { -- state map for big nixies
-  ["0"]=1,
-  ["1"]=2,
-  ["2"]=3,
-  ["3"]=4,
-  ["4"]=5,
-  ["5"]=6,
-  ["6"]=7,
-  ["7"]=8,
-  ["8"]=9,
-  ["9"]=10,
-  ["A"]=11,
-  ["B"]=12,
-  ["C"]=13,
-  ["D"]=14,
-  ["E"]=15,
-  ["F"]=16,
-  ["G"]=17,
-  ["H"]=18,
-  ["I"]=19,
-  ["J"]=20,
-  ["K"]=21,
-  ["L"]=22,
-  ["M"]=23,
-  ["N"]=24,
-  ["O"]=25,
-  ["P"]=26,
-  ["Q"]=27,
-  ["R"]=28,
-  ["S"]=29,
-  ["T"]=30,
-  ["U"]=31,
-  ["V"]=32,
-  ["W"]=33,
-  ["X"]=34,
-  ["Y"]=35,
-  ["Z"]=36,
-  ["err"]=37,
-  ["."]=38,
-  ["negative"]=39, -- for negative numbers
-  ["off"]=40,
-
-  --extended symbols
-  ["?"]=41,
-  ["!"]=42,
-  ["@"]=43,
-  ["["]=44,
-  ["]"]=45,
-  ["{"]=46,
-  ["}"]=47,
-  ["("]=48,
-  [")"]=49,
-  ["/"]=50,
-  ["*"]=51,
-  ["-"]=52, -- for subtraction operation
-  ["+"]=53,
-  ["%"]=54,
-
-  }
-
 local signalCharMap = {
   ["signal-0"] = "0",
   ["signal-1"] = "1",
@@ -113,7 +39,7 @@ local signalCharMap = {
   ["signal-negative"] = "negative",
 
   --extended symbols
-  ["signal-stop"] = ".",
+  ["signal-stop"] = "dot",
   ["signal-qmark"]="?",
   ["signal-exmark"]="!",
   ["signal-at"]="@",
@@ -170,17 +96,11 @@ function setStates(nixie,newstates,newcolor)
   for key,new_state in pairs(newstates) do
     if not new_state then new_state = "off" end
     local obj = global.spriteobjs[nixie.unit_number][key]
-    if obj and obj.valid then
+    if obj and rendering.is_valid(obj) then
       if nixie.energy > 70 then
-        obj.graphics_variation=stateOrientMap[new_state]
-
-        -- allow keeping old color to stretch it for one cycle when updating value
+        rendering.set_sprite(obj,"nixie-tube-sprite-" .. new_state)
 
         local color = newcolor
-        if color=="keepcolor" then
-          --game.print("keepcolor")
-          color = obj.color
-        end
 
         if not color then
           --game.print("nocolor")
@@ -192,16 +112,17 @@ function setStates(nixie,newstates,newcolor)
           color={r=1.0,  g=1.0,  b=1.0, a=1.0}
         end
 
-        obj.color=color
+        rendering.set_color(obj,color)
       else
       --  game.print("nopower")
-        if obj.graphics_variation ~= stateOrientMap["off"] then
-          obj.graphics_variation = stateOrientMap["off"]
+        if rendering.get_sprite(obj) ~= "nixie-tube-sprite-off" then
+          rendering.set_sprite(obj,"nixie-tube-sprite-off")
         end
-        obj.color={r=1.0,  g=1.0,  b=1.0, a=1.0}
+        rendering.set_color(obj,{r=1.0,  g=1.0,  b=1.0, a=1.0})
       end
     else
       game.print("invalid nixie sprite for " .. nixie.unit_number)
+      --TODO: if this happens a lot, jsut recreate them?
     end
   end
 end
@@ -439,23 +360,22 @@ function onPlaceEntity(event)
     local sprites = {}
     for n=1, num do
       --place the /real/ thing(s) at same spot
-      local name, position
+      local position
       if num == 1 then -- large tube, one sprite
-        name = "nixie-tube-simple-sprite"
-        position = {x=pos.x+1/32, y=pos.y+1/32}
+        position = {x=1/32, y=1/32}
       else
-        name = "nixie-tube-simple-sprite-small"
-        position = {x=pos.x-4/32+((n-1)*10/32), y=pos.y+4/32}
+        position = {x=-6/32+((n-1)*10/32), y=1/32}
       end
-      local sprite=surf.create_entity(
-        {
-          name=name,
-          position=position,
-          force=entity.force,
-          color = {r=1.0,  g=1.0,  b=1.0, a=1.0},
-          variation = stateOrientMap["off"]
-        })
-      sprite.active=false
+      local sprite= rendering.draw_sprite{
+        sprite = "nixie-tube-sprite-off",
+        target = entity,
+        target_offset = position,
+        surface = entity.surface,
+        tint = {r=1.0,  g=1.0,  b=1.0, a=1.0},
+        x_scale = 1/num,
+        y_scale = 1/num,
+        }
+
       sprites[n]=sprite
     end
     global.spriteobjs[entity.unit_number] = sprites
@@ -463,14 +383,6 @@ function onPlaceEntity(event)
     if entity.name == "nixie-tube-alpha" then
       global.alphas[entity.unit_number] = entity
     else
-
-      -- properly reset nixies when (re)added
-      local behavior = entity.get_or_create_control_behavior()
-    	local condition = behavior.circuit_condition
-      condition.condition.comparator="="
-      condition.condition.constant=val
-      condition.condition.second_signal=nil
-      behavior.circuit_condition = condition
 
       --enslave guy to left, if there is one
       local neighbors=surf.find_entities_filtered{
@@ -488,7 +400,6 @@ function onPlaceEntity(event)
           global.nextdigit[entity.unit_number] = n
         end
       end
-
 
       --slave self to right, if any
       neighbors=surf.find_entities_filtered{
@@ -512,7 +423,6 @@ end
 function onRemoveEntity(entity)
   if entity.valid then
     if validEntityName[entity.name] then
-      removeSpriteObjs(entity)
 
       --if I was a controller, deregister
       if global.next_controller == entity.unit_number then
@@ -587,15 +497,7 @@ script.on_configuration_changed(function(data)
 
     -- and re-index the world
     for _,surf in pairs(game.surfaces) do
-      -- Destroy old sprite objects
-      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-simple-sprite"}) do
-        removeSpriteObj(sprite)
-      end
-      for _,sprite in pairs(surf.find_entities_filtered{name="nixie-tube-simple-sprite-small"}) do
-        removeSpriteObj(sprite)
-      end
-
-      -- And re-index all nixies. non-nixie lamps will be ignored by onPlaceEntity
+      -- re-index all nixies. non-nixie lamps will be ignored by onPlaceEntity
       for _,lamp in pairs(surf.find_entities_filtered{type="lamp"}) do
         onPlaceEntity({created_entity=lamp})
       end
