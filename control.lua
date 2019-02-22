@@ -95,6 +95,8 @@ end
 function setStates(nixie,newstates,newcolor)
   for key,new_state in pairs(newstates) do
     if not new_state then new_state = "off" end
+    -- printing floats sometimes hands us a literal '.', needs to be renamed
+    if new_state == '.' then new_state = "dot" end
     local obj = global.spriteobjs[nixie.unit_number][key]
     if obj and rendering.is_valid(obj) then
       if nixie.energy > 70 then
