@@ -246,32 +246,27 @@ end
 function onTickController(entity)
   local signals = entity.get_merged_signals()
   if signals then
-    local v = get_signal_from_set(get_selected_signal(entity),signals)
+    local v = get_signal_from_set(get_selected_signal(entity),signals) or 0
     --game.print("got v=" .. (v or "nil"))
-    if v then
-      local control = entity.get_or_create_control_behavior()
+    local control = entity.get_or_create_control_behavior()
 
-      local float = (get_signal_from_set(sigFloat,signals) or 0 ) ~= 0
-      local hex = (get_signal_from_set(sigHex,signals) or 0 ) ~= 0
-      local format = "%i"
-      if float and hex then
-        format = "%A"
-        v = float_from_int(v)
-      elseif hex then
-        format = "%X"
-        if v < 0 then v = v + 0x100000000 end
-      elseif float then
-        format = "%G"
-        v = float_from_int(v)
-      end
-
-      displayValString(entity,format:format(v),control.use_colors and control.color)
-
-    else
-      displayValString(entity)
+    local float = (get_signal_from_set(sigFloat,signals) or 0 ) ~= 0
+    local hex = (get_signal_from_set(sigHex,signals) or 0 ) ~= 0
+    local format = "%i"
+    if float and hex then
+      format = "%A"
+      v = float_from_int(v)
+    elseif hex then
+      format = "%X"
+      if v < 0 then v = v + 0x100000000 end
+    elseif float then
+      format = "%G"
+      v = float_from_int(v)
     end
+
+    displayValString(entity,format:format(v),control.use_colors and control.color)
   else
-    displayValString(entity)
+    displayValString(entity,"0")
   end
 end
 
