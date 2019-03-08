@@ -316,7 +316,7 @@ local spritelist =
   ["}"]={x=6,y=4},
   ["("]={x=7,y=4},
   [")"]={x=8,y=4},
-  ["/"]={x=9,y=4},
+  ["slash"]={x=9,y=4},
   ["*"]={x=0,y=5},
   ["-"]={x=1,y=5}, -- for subtraction operation
   ["+"]={x=2,y=5},
