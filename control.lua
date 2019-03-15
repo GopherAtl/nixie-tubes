@@ -371,6 +371,7 @@ function onPlaceEntity(event)
         tint = {r=1.0,  g=1.0,  b=1.0, a=1.0},
         x_scale = 1/num,
         y_scale = 1/num,
+        render_layer = "object",
         }
 
       sprites[n]=sprite
