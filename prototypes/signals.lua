@@ -27,12 +27,12 @@ end
 --create_symsignal("negative")
 
 --extended symbols
-create_symsignal("sqopen",'a')
-create_symsignal("sqclose",'a')
-create_symsignal("curopen",'a')
-create_symsignal("curclose",'a')
-create_symsignal("paropen",'a')
-create_symsignal("parclose",'a')
+create_symsignal("paropen",'a-aa')
+create_symsignal("parclose",'a-ab')
+create_symsignal("sqopen",'a-ba')
+create_symsignal("sqclose",'a-bb')
+create_symsignal("curopen",'a-ca')
+create_symsignal("curclose",'a-cb')
 
 create_symsignal("stop",'b')
 create_symsignal("qmark",'b')
