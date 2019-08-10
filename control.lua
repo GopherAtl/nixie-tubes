@@ -92,31 +92,30 @@ end
 
 
 --sets the state(s) and update the sprite for a nixie
-function setStates(nixie,newstates,newcolor)
+function setStates(nixie,cache,newstates,newcolor)
   for key,new_state in pairs(newstates) do
     if not new_state then new_state = "off" end
     -- printing floats sometimes hands us a literal '.', needs to be renamed
     if new_state == '.' then new_state = "dot" end
-    local obj = global.spriteobjs[nixie.unit_number][key]
+
+
+    local obj = cache.sprites[key]
     if obj and rendering.is_valid(obj) then
       if nixie.energy > 70 then
-        rendering.set_sprite(obj,"nixie-tube-sprite-" .. new_state)
+        if cache.laststate[key] ~= new_state then
+          cache.laststate[key] = new_state
+          rendering.set_sprite(obj,"nixie-tube-sprite-" .. new_state)
+        end
 
         local color = newcolor
+        if not color then color = {r=1.0,  g=0.6,  b=0.2, a=1.0} end
+        if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
 
-        if not color then
-          --game.print("nocolor")
-          color = {r=1.0,  g=0.6,  b=0.2, a=1.0}
+        if not (cache.lastcolor[key] and cache.lastcolor[key].r == color.r and cache.lastcolor[key].g == color.g and cache.lastcolor[key].b == color.b and cache.lastcolor[key].a == color.a) then
+          cache.lastcolor[key] = color
+          rendering.set_color(obj,color)
         end
-
-        if new_state == "off" then
-          --game.print("offcolor")
-          color={r=1.0,  g=1.0,  b=1.0, a=1.0}
-        end
-
-        rendering.set_color(obj,color)
       else
-      --  game.print("nopower")
         if rendering.get_sprite(obj) ~= "nixie-tube-sprite-off" then
           rendering.set_sprite(obj,"nixie-tube-sprite-off")
         end
@@ -129,9 +128,8 @@ function setStates(nixie,newstates,newcolor)
   end
 end
 
-function get_selected_signal(entity)
-  local behavior = entity.get_control_behavior()
-	if behavior == nil then
+function get_selected_signal(behavior)
+  if behavior == nil then
     return nil
   end
 
@@ -152,14 +150,24 @@ function get_selected_signal(entity)
   return signal
 end
 
-function get_signal_from_set(signal,set)
-  for _,sig in pairs(set) do
-    if sig.signal.type == signal.type and sig.signal.name == signal.name then
-      return sig.count
+function get_signals_filtered(filters,signals)
+  --   filters = {
+  --  SignalID,
+  --  }
+  local results = {}
+  local count = 0
+  for _,sig in pairs(signals) do
+    for i,f in pairs(filters) do
+      if f.name and sig.signal.type == f.type and sig.signal.name == f.name then
+        results[i] = sig.count
+        count = count + 1
+        if count == #filters then return results end
+      end
     end
   end
-  return nil
+  return results
 end
+
 
 local validEntityName = {
   ['nixie-tube']       = 1,
@@ -167,36 +175,39 @@ local validEntityName = {
   ['nixie-tube-small'] = 2
 }
 
-local sigFloat = {name="signal-float",type="virtual"}
-local sigHex = {name="signal-hex",type="virtual"}
+function displayValString(entity,vs,color,offset)
+  if not offset then offset = vs and #vs or 0 end
+  while entity do 
+    local nextdigit = global.nextdigit[entity.unit_number]
+    local cache = global.cache[entity.unit_number]
+    local chcount = #cache.sprites
 
-function displayValString(entity,vs,color)
-
-  local nextdigit = global.nextdigit[entity.unit_number]
-  local chcount = #global.spriteobjs[entity.unit_number]
-
-  if not vs then
-    --game.print("off")
-    setStates(entity,(chcount==1) and {"off"} or {"off","off"})
-  elseif #vs < chcount then
-    --game.print("pastend")
-    setStates(entity,{"off",vs},color)
-  elseif #vs >= chcount then
-    --game.print("digit " .. serpent.line(color))
-    setStates(entity,(chcount==1) and {vs:sub(-1)} or {vs:sub(-2,-2),vs:sub(-1)},color)
-  end
-
-  if nextdigit then
-    if nextdigit.valid then
-      if vs and #vs>chcount then
-        displayValString(nextdigit,vs:sub(1,-(chcount+1)),color)
-      else
-        displayValString(nextdigit)
-      end
-    else
-      --when a nixie in the middle is removed, it doesn't have the unit_number to it's right to remove itself
-      global.nextdigit[entity.unit_number] = nil
+    if not vs then
+      setStates(entity,cache,(chcount==1) and {"off"} or {"off","off"})
+    elseif offset < chcount then
+      setStates(entity,cache,{"off",vs:sub(offset,offset)},color)
+    elseif offset >= chcount then
+      setStates(entity,cache,
+        (chcount==1) and 
+          {vs:sub(offset,offset)} or 
+          {vs:sub(offset-1,offset-1),vs:sub(offset,offset)}
+        ,color)
     end
+
+    if nextdigit then
+      if nextdigit.valid then
+        if offset>chcount then
+          offset = offset-chcount
+        else
+          vs = nil
+        end
+      else
+        --when a nixie in the middle is removed, it doesn't have the unit_number to it's right to remove itself
+        global.nextdigit[entity.unit_number] = nil
+        nextdigit = nil
+      end
+    end
+    entity = nextdigit
   end
 end
 
@@ -232,7 +243,7 @@ function getAlphaSignals(entity)
     for _,s in pairs(signals) do
       if signalCharMap[s.signal.name] then
         if ch then
-          ch = "err"
+          return "err"
         else
           ch = signalCharMap[s.signal.name]
         end
@@ -243,59 +254,68 @@ function getAlphaSignals(entity)
   return ch
 end
 
-function onTickController(entity)
+local sigFloat = {name="signal-float",type="virtual"}
+local sigHex = {name="signal-hex",type="virtual"}
+
+function onTickController(entity,cache)
   local signals = entity.get_merged_signals()
   if signals then
-    local v = get_signal_from_set(get_selected_signal(entity),signals) or 0
-    --game.print("got v=" .. (v or "nil"))
-    local control = entity.get_or_create_control_behavior()
+    if not (cache.control and cache.control.valid) then cache.control = entity.get_or_create_control_behavior() end
+    local control = cache.control
 
-    local float = (get_signal_from_set(sigFloat,signals) or 0 ) ~= 0
-    local hex = (get_signal_from_set(sigHex,signals) or 0 ) ~= 0
-    local format = "%i"
-    if float and hex then
-      format = "%A"
-      v = float_from_int(v)
-    elseif hex then
-      format = "%X"
-      if v < 0 then v = v + 0x100000000 end
-    elseif float then
-      format = "%G"
-      v = float_from_int(v)
+    local sigdata = get_signals_filtered( {float = sigFloat, hex = sigHex, v = get_selected_signal(control) } ,signals)
+
+    local v = sigdata.v or 0
+
+    if cache.lastvalue ~= v or cache.control.use_colors or not cache.laststate[1] then
+      cache.lastvalue = v
+
+      local float = sigdata.float ~= nil
+      local hex = sigdata.hex ~= nil
+      local format = "%i"
+      if float and hex then
+        format = "%A"
+        v = float_from_int(v)
+      elseif hex then
+        format = "%X"
+        if v < 0 then v = v + 0x100000000 end
+      elseif float then
+        format = "%G"
+        v = float_from_int(v)
+      end
+
+      displayValString(entity,format:format(v),control.use_colors and control.color)
     end
-
-    displayValString(entity,format:format(v),control.use_colors and control.color)
   else
-    displayValString(entity,"0")
+    if cache.lastvalue ~= 0 or not cache.laststate[1] then
+      cache.lastvalue = 0
+      displayValString(entity,"0")
+    end
   end
 end
 
-function onTickAlpha(entity)
-  if not entity then return end
+local always_on = {
+  condition={
+    first_signal={name="signal-anything",type="virtual"},
+    comparator="≠",
+    constant=0,
+    second_signal=nil
+  },
+  connect_to_logistic_network=false
+}
 
-  if not entity.valid then
-    onRemoveEntity(entity)
-    return
-  end
-
+function onTickAlpha(entity,cache)
   local charsig = getAlphaSignals(entity) or "off"
 
   local color
-  local control = entity.get_or_create_control_behavior()
+  if not (cache.control and cache.control.valid) then cache.control = entity.get_or_create_control_behavior() end
+  local control = cache.control
   if control.use_colors then
-    control.circuit_condition = {
-      condition={
-        first_signal={name="signal-anything",type="virtual"},
-        comparator="≠",
-        constant=0,
-        second_signal=nil
-      },
-      connect_to_logistic_network=false
-    }
+    control.circuit_condition = always_on
     color = control.color
   end
 
-  setStates(entity,{charsig},color)
+  setStates(entity,cache,{charsig},color)
 end
 
 
@@ -304,7 +324,6 @@ function onTick(event)
   for _=1, settings.global["nixie-tube-update-speed-numeric"].value do
     local nixie
     if global.next_controller and not global.controllers[global.next_controller] then
-      game.print("Invalid next_controller " .. global.next_controller)
       global.next_controller=nil
     end
 
@@ -312,11 +331,11 @@ function onTick(event)
 
     if nixie then
       if nixie.valid then
-        --game.print("Updating Nixie " .. global.next_controller)
-        onTickController(nixie)
+        onTickController(nixie,global.cache[global.next_controller])
       else
-        game.print("remvoing damaged nixie tube " .. global.next_controller)
+        log("cleaning up nixie tube " .. global.next_controller .. " destroyed without events")
         global.controllers[global.next_controller] = nil
+        global.cache[global.next_controller] = nil
         global.next_controller = nil
       end
     end
@@ -325,18 +344,17 @@ function onTick(event)
   for _=1, settings.global["nixie-tube-update-speed-alpha"].value do
     local nixie
     if global.next_alpha and not global.alphas[global.next_alpha] then
-      game.print("Invalid next_alpha " .. global.next_alpha)
       global.next_alpha=nil
     end
     global.next_alpha,nixie = next(global.alphas,global.next_alpha)
 
     if nixie then
       if nixie.valid then
-        --game.print("Updating Nixie " .. global.next_alpha)
-        onTickAlpha(nixie)
+        onTickAlpha(nixie, global.cache[global.next_alpha])
       else
-        game.print("remvoing damaged nixie tube " .. global.next_alpha)
+        log("cleaning up nixie tube " .. global.next_alpha .. " destroyed without events")
         global.alphas[global.next_alpha] = nil
+        global.cache[global.next_alpha] = nil
         global.next_alpha = nil
       end
     end
@@ -350,7 +368,6 @@ function onPlaceEntity(event)
 
   local num = validEntityName[entity.name]
   if num then
-    --game.print("found nixie " .. entity.unit_number)
     local pos=entity.position
     local surf=entity.surface
 
@@ -376,10 +393,18 @@ function onPlaceEntity(event)
 
       sprites[n]=sprite
     end
-    global.spriteobjs[entity.unit_number] = sprites
 
+    local control = entity.get_or_create_control_behavior()
+    global.cache[entity.unit_number]={
+      control = control,
+      sprites = sprites,
+      laststate = {},
+      lastcolor = {},
+    }
+    
     if entity.name == "nixie-tube-alpha" then
       global.alphas[entity.unit_number] = entity
+      onTickAlpha(entity,global.cache[entity.unit_number])
     else
 
       --enslave guy to left, if there is one
@@ -388,7 +413,6 @@ function onPlaceEntity(event)
         name=entity.name}
       for _,n in pairs(neighbors) do
         if n.valid then
-          --game.print(entity.unit_number .. " found neighbor left " .. n.unit_number)
           if global.next_controller == n.unit_number then
             -- if it's currently the *next* controller, claim that too...
             global.next_controller = entity.unit_number
@@ -406,13 +430,13 @@ function onPlaceEntity(event)
       local foundright=false
       for _,n in pairs(neighbors) do
         if n.valid then
-          --game.print(entity.unit_number .. " found neighbor right " .. n.unit_number)
           foundright=true
           global.nextdigit[n.unit_number]=entity
         end
       end
       if not foundright then
         global.controllers[entity.unit_number] = entity
+        onTickController(entity,global.cache[entity.unit_number])
       end
     end
   end
@@ -424,34 +448,31 @@ function onRemoveEntity(entity)
 
       --if I was a controller, deregister
       if global.next_controller == entity.unit_number then
-        -- if i was the *next* controller, pass it forward...
-        if not global.controllers[global.next_controller] then
-          game.print("Invalid next_controller removal??")
-          global.next_controller=nil
-        end
-        global.next_controller = next(global.controllers,global.next_controller)
+        -- if i was the *next* controller, restart iteration...
+        global.next_controller=nil
       end
       global.controllers[entity.unit_number]=nil
+      
 
       --if i was an alpha, deregister
       if global.next_alpha == entity.unit_number then
-        -- if i was the *next* alpha, pass it forward...
-        if not global.alphas[global.next_alpha] then
-          game.print("Invalid next_alpha removal??")
-          global.next_alpha=nil
-        end
-        global.next_alpha = next(global.alphas,global.next_alpha)
+        -- if i was the *next* alpha, restart iteration...
+        global.next_controller=nil
       end
       global.alphas[entity.unit_number]=nil
 
-      --if I had a next-digit, register it as a controller
-      --if i was a next-digit, unlink
+      global.cache[entity.unit_number]=nil
+
+      
+      
       local nextdigit = global.nextdigit[entity.unit_number]
+      --if I had a next-digit, register it as a controller
       if nextdigit and nextdigit.valid then
         global.controllers[nextdigit.unit_number] = nextdigit
         displayValString(nextdigit)
         global.nextdigit[entity.unit_number] = nil
       end
+      --if i was a next-digit, unlink
       for k,v in pairs(global.nextdigit) do
         if v == entity then
           global.nextdigit[k] = nil
@@ -463,10 +484,23 @@ function onRemoveEntity(entity)
   end
 end
 
+
+--[[
+global = {
+  alphas = { [unit_number]=>entity },
+  controllers = { [unit_number]=>entity },
+
+  nextdigit = { [unit_number]=>entity }
+  cache = {
+    [unit_number]={control,laststate,lastcolor,sprites={}}
+  }
+}
+]]
+
 script.on_init(function()
   global.alphas = {}
   global.controllers = {}
-  global.spriteobjs = {}
+  global.cache = {}
   global.nextdigit = {}
 
   RegisterStrings()
@@ -482,14 +516,11 @@ script.on_configuration_changed(function(data)
   if data.mod_changes and data.mod_changes["nixie-tubes"] then
     --If my data has changed, rebuild all my tables. There are so many old formats, there's no other sensible way to upgrade.
 
-    -- remove ancient config if it's still here
-    if global.nixie_tubes then global.nixie_tubes = nil end
-
     -- clear the tables
     global = {
       alphas = {},
       controllers = {},
-      spriteobjs = {},
+      cache = {},
       nextdigit = {},
     }
 
