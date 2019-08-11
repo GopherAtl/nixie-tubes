@@ -56,7 +56,7 @@ local signalCharMap = {
   ["signal-percent"]="%",
 }
 
-function RegisterStrings()
+local function RegisterStrings()
   if remote.interfaces['signalstrings'] and remote.interfaces['signalstrings']['register_signal'] then
     local syms = {
       ["signal-stop"] = ".",
@@ -81,7 +81,7 @@ function RegisterStrings()
   end
 end
 
-function RegisterPicker()
+local function RegisterPicker()
   if remote.interfaces["picker"] and remote.interfaces["picker"]["dolly_moved_entity_id"] then
     script.on_event(remote.call("picker", "dolly_moved_entity_id"), function(event)
       onRemoveEntity(event.moved_entity)
@@ -92,7 +92,7 @@ end
 
 
 --sets the state(s) and update the sprite for a nixie
-function setStates(nixie,cache,newstates,newcolor)
+local function setStates(nixie,cache,newstates,newcolor)
   for key,new_state in pairs(newstates) do
     if not new_state then new_state = "off" end
     -- printing floats sometimes hands us a literal '.', needs to be renamed
@@ -128,7 +128,7 @@ function setStates(nixie,cache,newstates,newcolor)
   end
 end
 
-function get_selected_signal(behavior)
+local function get_selected_signal(behavior)
   if behavior == nil then
     return nil
   end
@@ -150,7 +150,7 @@ function get_selected_signal(behavior)
   return signal
 end
 
-function get_signals_filtered(filters,signals)
+local function get_signals_filtered(filters,signals)
   --   filters = {
   --  SignalID,
   --  }
@@ -175,7 +175,7 @@ local validEntityName = {
   ['nixie-tube-small'] = 2
 }
 
-function displayValString(entity,vs,color,offset)
+local function displayValString(entity,vs,color,offset)
   if not offset then offset = vs and #vs or 0 end
   while entity do 
     local nextdigit = global.nextdigit[entity.unit_number]
@@ -211,7 +211,7 @@ function displayValString(entity,vs,color,offset)
   end
 end
 
-function float_from_int(i)
+local function float_from_int(i)
   local sign = bit32.btest(i,0x80000000) and -1 or 1
   local exponent = bit32.rshift(bit32.band(i,0x7F800000),23)-127
   local significand = bit32.band(i,0x007FFFFF)
@@ -235,7 +235,7 @@ function float_from_int(i)
   return sign * math.ldexp(bit32.bor(significand,0x00800000),exponent-23) --[[normal numbers]]
 end
 
-function getAlphaSignals(entity)
+local function getAlphaSignals(entity)
   local signals = entity.get_merged_signals()
   local ch = nil
 
@@ -257,7 +257,7 @@ end
 local sigFloat = {name="signal-float",type="virtual"}
 local sigHex = {name="signal-hex",type="virtual"}
 
-function onTickController(entity,cache)
+local function onTickController(entity,cache)
   local signals = entity.get_merged_signals()
   if signals then
     if not (cache.control and cache.control.valid) then cache.control = entity.get_or_create_control_behavior() end
@@ -304,7 +304,7 @@ local always_on = {
   connect_to_logistic_network=false
 }
 
-function onTickAlpha(entity,cache)
+local function onTickAlpha(entity,cache)
   local charsig = getAlphaSignals(entity) or "off"
 
   local color
@@ -319,7 +319,7 @@ function onTickAlpha(entity,cache)
 end
 
 
-function onTick(event)
+local function onTick(event)
 
   for _=1, settings.global["nixie-tube-update-speed-numeric"].value do
     local nixie
@@ -361,7 +361,7 @@ function onTick(event)
   end
 end
 
-function onPlaceEntity(event)
+local function onPlaceEntity(event)
 
   local entity=event.created_entity
   if not entity.valid then return end
@@ -440,7 +440,7 @@ function onPlaceEntity(event)
   end
 end
 
-function onRemoveEntity(entity)
+local function onRemoveEntity(entity)
   if entity.valid then
     if validEntityName[entity.name] then
 
