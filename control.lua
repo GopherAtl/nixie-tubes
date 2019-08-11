@@ -404,7 +404,6 @@ function onPlaceEntity(event)
     
     if entity.name == "nixie-tube-alpha" then
       global.alphas[entity.unit_number] = entity
-      onTickAlpha(entity,global.cache[entity.unit_number])
     else
 
       --enslave guy to left, if there is one
@@ -436,7 +435,6 @@ function onPlaceEntity(event)
       end
       if not foundright then
         global.controllers[entity.unit_number] = entity
-        onTickController(entity,global.cache[entity.unit_number])
       end
     end
   end
