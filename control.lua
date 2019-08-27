@@ -1,4 +1,10 @@
 -- luacheck: globals global settings game defines script
+local validEntityName = {
+  ['nixie-tube']       = 1,
+  ['nixie-tube-alpha'] = 1,
+  ['nixie-tube-small'] = 2
+}
+
 local signalCharMap = {
   ["signal-0"] = "0",
   ["signal-1"] = "1",
@@ -100,30 +106,47 @@ local function setStates(nixie,cache,newstates,newcolor)
 
 
     local obj = cache.sprites[key]
-    if obj and rendering.is_valid(obj) then
-      if nixie.energy > 70 then
-        if cache.laststate[key] ~= new_state then
-          cache.laststate[key] = new_state
-          rendering.set_sprite(obj,"nixie-tube-sprite-" .. new_state)
-        end
-
-        local color = newcolor
-        if not color then color = {r=1.0,  g=0.6,  b=0.2, a=1.0} end
-        if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
-
-        if not (cache.lastcolor[key] and cache.lastcolor[key].r == color.r and cache.lastcolor[key].g == color.g and cache.lastcolor[key].b == color.b and cache.lastcolor[key].a == color.a) then
-          cache.lastcolor[key] = color
-          rendering.set_color(obj,color)
-        end
+    if not (obj and rendering.is_valid(obj)) then
+      cache.lastcolor[key] = nil
+      
+      local num = validEntityName[nixie.name]
+      local position
+      if num == 1 then -- large tube, one sprite
+        position = {x=1/32, y=1/32}
       else
-        if rendering.get_sprite(obj) ~= "nixie-tube-sprite-off" then
-          rendering.set_sprite(obj,"nixie-tube-sprite-off")
-        end
-        rendering.set_color(obj,{r=1.0,  g=1.0,  b=1.0, a=1.0})
+        position = {x=-6/32+((key-1)*10/32), y=1/32}
+      end
+      obj = rendering.draw_sprite{
+        sprite = "nixie-tube-sprite-" .. new_state,
+        target = nixie,
+        target_offset = position,
+        surface = nixie.surface,
+        tint = {r=1.0,  g=1.0,  b=1.0, a=1.0},
+        x_scale = 1/num,
+        y_scale = 1/num,
+        render_layer = "object",
+        }
+
+      cache.sprites[key] = obj
+    end
+    
+    if nixie.energy > 70 then
+      rendering.set_sprite(obj,"nixie-tube-sprite-" .. new_state)
+      
+      local color = newcolor
+      if not color then color = {r=1.0,  g=0.6,  b=0.2, a=1.0} end
+      if new_state == "off" then color={r=1.0,  g=1.0,  b=1.0, a=1.0} end
+
+      if not (cache.lastcolor[key] and (cache.lastcolor[key].r == color.r) and (cache.lastcolor[key].g == color.g) and (cache.lastcolor[key].b == color.b) and (cache.lastcolor[key].a == color.a)) then
+        cache.lastcolor[key] = color
+        rendering.set_color(obj,color)
       end
     else
-      game.print("invalid nixie sprite for " .. nixie.unit_number)
-      --TODO: if this happens a lot, jsut recreate them?
+      if rendering.get_sprite(obj) ~= "nixie-tube-sprite-off" then
+        rendering.set_sprite(obj,"nixie-tube-sprite-off")
+      end
+      rendering.set_color(obj,{r=1.0,  g=1.0,  b=1.0, a=1.0})
+      cache.lastcolor[key] = nil
     end
   end
 end
@@ -150,30 +173,26 @@ local function get_selected_signal(behavior)
   return signal
 end
 
-local function get_signals_filtered(filters,signals)
+local function get_signals_filtered(filters,entity)
   --   filters = {
   --  SignalID,
+  --  ...
   --  }
+  local red = entity.get_circuit_network(defines.wire_type.red)
+  local green = entity.get_circuit_network(defines.wire_type.green)
   local results = {}
-  local count = 0
-  for _,sig in pairs(signals) do
-    for i,f in pairs(filters) do
-      if f.name and sig.signal.type == f.type and sig.signal.name == f.name then
-        results[i] = sig.count
-        count = count + 1
-        if count == #filters then return results end
-      end
+  if not red and not green then return results end
+  for i,f in pairs(filters) do
+    results[i] = 0
+    if red then 
+      results[i] =  results[i] + red.get_signal(f) 
+    end
+    if green then 
+      results[i] =  results[i] + green.get_signal(f) 
     end
   end
   return results
 end
-
-
-local validEntityName = {
-  ['nixie-tube']       = 1,
-  ['nixie-tube-alpha'] = 1,
-  ['nixie-tube-small'] = 2
-}
 
 local function displayValString(entity,vs,color,offset)
   if not offset then offset = vs and #vs or 0 end
@@ -258,40 +277,33 @@ local sigFloat = {name="signal-float",type="virtual"}
 local sigHex = {name="signal-hex",type="virtual"}
 
 local function onTickController(entity,cache)
-  local signals = entity.get_merged_signals()
-  if signals then
-    if not (cache.control and cache.control.valid) then cache.control = entity.get_or_create_control_behavior() end
-    local control = cache.control
+  if not (cache.control and cache.control.valid) then cache.control = entity.get_or_create_control_behavior() end
+  local control = cache.control
 
-    local sigdata = get_signals_filtered( {float = sigFloat, hex = sigHex, v = get_selected_signal(control) } ,signals)
+  local sigdata = get_signals_filtered( {float = sigFloat, hex = sigHex, v = get_selected_signal(control) }, entity)
 
-    local v = sigdata.v or 0
+  local v = sigdata.v
 
-    if cache.lastvalue ~= v or cache.control.use_colors or not cache.laststate[1] then
-      cache.lastvalue = v
+  if cache.lastvalue ~= v or cache.control.use_colors then
+    cache.lastvalue = v
 
-      local float = sigdata.float ~= nil
-      local hex = sigdata.hex ~= nil
-      local format = "%i"
-      if float and hex then
-        format = "%A"
-        v = float_from_int(v)
-      elseif hex then
-        format = "%X"
-        if v < 0 then v = v + 0x100000000 end
-      elseif float then
-        format = "%G"
-        v = float_from_int(v)
-      end
-
-      displayValString(entity,format:format(v),control.use_colors and control.color)
+    local float = sigdata.float ~= 0
+    local hex = sigdata.hex ~= 0
+    local format = "%i"
+    if float and hex then
+      format = "%A"
+      v = float_from_int(v)
+    elseif hex then
+      format = "%X"
+      if v < 0 then v = v + 0x100000000 end
+    elseif float then
+      format = "%G"
+      v = float_from_int(v)
     end
-  else
-    if cache.lastvalue ~= 0 or not cache.laststate[1] then
-      cache.lastvalue = 0
-      displayValString(entity,"0")
-    end
+
+    displayValString(entity,format:format(v),control.use_colors and control.color)
   end
+
 end
 
 local always_on = {
@@ -398,7 +410,6 @@ local function onPlaceEntity(event)
     global.cache[entity.unit_number]={
       control = control,
       sprites = sprites,
-      laststate = {},
       lastcolor = {},
     }
     
@@ -490,7 +501,7 @@ global = {
 
   nextdigit = { [unit_number]=>entity }
   cache = {
-    [unit_number]={control,laststate,lastcolor,sprites={}}
+    [unit_number]={control,lastcolor,sprites={}}
   }
 }
 ]]
