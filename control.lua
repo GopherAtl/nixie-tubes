@@ -471,10 +471,7 @@ local function onRemoveEntity(entity)
         global.next_controller=nil
       end
       global.alphas[entity.unit_number]=nil
-
       global.cache[entity.unit_number]=nil
-
-      
       
       local nextdigit = global.nextdigit[entity.unit_number]
       --if I had a next-digit, register it as a controller
@@ -523,30 +520,32 @@ script.on_load(function()
   RegisterPicker()
 end)
 
+function RebuildNixies()
+  -- clear the tables
+  global = {
+    alphas = {},
+    controllers = {},
+    cache = {},
+    nextdigit = {},
+  }
+
+  -- wipe out any lingering sprites i've just deleted the references to...
+  rendering.clear("nixie-tubes")
+
+  -- and re-index the world
+  for _,surf in pairs(game.surfaces) do
+    -- re-index all nixies. non-nixie lamps will be ignored by onPlaceEntity
+    for _,lamp in pairs(surf.find_entities_filtered{type="lamp"}) do
+      onPlaceEntity({created_entity=lamp})
+    end
+  end
+end
+
+commands.add_command("RebuildNixies","Reset all Nixie Tubes to clear display glitches.", RebuildNixies)
+
 script.on_configuration_changed(function(data)
   if data.mod_changes and data.mod_changes["nixie-tubes"] then
-    --If my data has changed, rebuild all my tables. There are so many old formats, there's no other sensible way to upgrade.
-
-    -- clear the tables
-    global = {
-      alphas = {},
-      controllers = {},
-      cache = {},
-      nextdigit = {},
-    }
-
-    -- wipe out any lingering sprites i've just deleted the references to...
-    rendering.clear("nixie-tubes")
-
-    -- and re-index the world
-    for _,surf in pairs(game.surfaces) do
-      -- re-index all nixies. non-nixie lamps will be ignored by onPlaceEntity
-      for _,lamp in pairs(surf.find_entities_filtered{type="lamp"}) do
-        onPlaceEntity({created_entity=lamp})
-      end
-    end
-
-
+    RebuildNixies()
   end
 end)
 
