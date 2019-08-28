@@ -184,11 +184,13 @@ local function get_signals_filtered(filters,entity)
   if not red and not green then return results end
   for i,f in pairs(filters) do
     results[i] = 0
-    if red then 
-      results[i] =  results[i] + red.get_signal(f) 
-    end
-    if green then 
-      results[i] =  results[i] + green.get_signal(f) 
+    if f.name then
+      if red then 
+        results[i] =  results[i] + red.get_signal(f) 
+      end
+      if green then 
+        results[i] =  results[i] + green.get_signal(f) 
+      end
     end
   end
   return results
@@ -279,7 +281,7 @@ local sigHex = {name="signal-hex",type="virtual"}
 local function onTickController(entity,cache)
   if not (cache.control and cache.control.valid) then cache.control = entity.get_or_create_control_behavior() end
   local control = cache.control
-
+  
   local sigdata = get_signals_filtered( {float = sigFloat, hex = sigHex, v = get_selected_signal(control) }, entity)
 
   local v = sigdata.v
