@@ -284,7 +284,7 @@ local function onTickController(entity,cache)
   
   local sigdata = get_signals_filtered( {float = sigFloat, hex = sigHex, v = get_selected_signal(control) }, entity)
 
-  local v = sigdata.v
+  local v = sigdata.v or 0
 
   if cache.lastvalue ~= v or cache.control.use_colors then
     cache.lastvalue = v
