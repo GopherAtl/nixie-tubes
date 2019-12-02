@@ -76,19 +76,6 @@ data:extend{
       height = 1,
       shift = {0,0}
     },
-    circuit_wire_connection_point =
-    {
-      shadow =
-      {
-        red = {22.5/32, 23.5/32},
-        green = {18.5/32, 28.5/32},
-      },
-      wire =
-      {
-        red = {12/32, 23/32},
-        green = {12/32, 28/32},
-      }
-    },
     circuit_wire_connection_point = circuit_connector_definitions["nixie"].points,
     circuit_connector_sprites = circuit_connector_definitions["nixie"].sprites,
     circuit_wire_max_distance = 7.5
@@ -151,19 +138,6 @@ data:extend{
       width = 1,
       height = 1,
       shift = {0,0}
-    },
-    circuit_wire_connection_point =
-    {
-      shadow =
-      {
-        red = {22.5/32, 23.5/32},
-        green = {18.5/32, 28.5/32},
-      },
-      wire =
-      {
-        red = {12/32, 23/32},
-        green = {12/32, 28/32},
-      }
     },
     circuit_wire_connection_point = circuit_connector_definitions["nixie"].points,
     circuit_connector_sprites = circuit_connector_definitions["nixie"].sprites,
@@ -228,19 +202,6 @@ data:extend{
       width = 1,
       height = 1,
       shift = {0,0}
-    },
-    circuit_wire_connection_point =
-    {
-      shadow =
-      {
-        red = {12/32, 15/32},
-        green = {12/32, 19/32},
-      },
-      wire =
-      {
-        red = {12/32, 13/32},
-        green = {12/32, 18/32},
-      }
     },
     circuit_wire_max_distance = 7.5,
 

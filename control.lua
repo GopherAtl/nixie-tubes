@@ -87,16 +87,6 @@ local function RegisterStrings()
   end
 end
 
-local function RegisterPicker()
-  if remote.interfaces["picker"] and remote.interfaces["picker"]["dolly_moved_entity_id"] then
-    script.on_event(remote.call("picker", "dolly_moved_entity_id"), function(event)
-      onRemoveEntity(event.moved_entity)
-      onPlaceEntity({created_entity=event.moved_entity})
-    end)
-  end
-end
-
-
 --sets the state(s) and update the sprite for a nixie
 local function setStates(nixie,cache,newstates,newcolor)
   for key,new_state in pairs(newstates) do
@@ -492,6 +482,14 @@ local function onRemoveEntity(entity)
   end
 end
 
+local function RegisterPicker()
+  if remote.interfaces["picker"] and remote.interfaces["picker"]["dolly_moved_entity_id"] then
+    script.on_event(remote.call("picker", "dolly_moved_entity_id"), function(event)
+      onRemoveEntity(event.moved_entity)
+      onPlaceEntity({created_entity=event.moved_entity})
+    end)
+  end
+end
 
 --[[
 global = {
