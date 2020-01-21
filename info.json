@@ -1,9 +1,9 @@
 {
   "name": "nixie-tubes",
-  "version": "0.17.12",
-  "factorio_version": "0.17",
+  "version": "0.18.0",
+  "factorio_version": "0.18",
   "title": "Nixie Tubes",
   "author": "GopherAtl, justarandomgeek",
   "description": "Adds nixie tubes, for displaying values from a connected circuit network.",
-  "dependencies": ["base >= 0.17.0", "?signalstrings >= 0.17.0", "?PickerExtended"]
+  "dependencies": ["base", "?signalstrings >= 0.18.0", "?PickerExtended"]
 }
