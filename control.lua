@@ -366,11 +366,7 @@ local function onTick(event)
   end
 end
 
-local function onPlaceEntity(event)
-
-  local entity=event.created_entity
-  if not entity.valid then return end
-
+local function onPlaceEntity(entity)
   local num = validEntityName[entity.name]
   if num then
     local pos=entity.position
@@ -548,11 +544,44 @@ script.on_configuration_changed(function(data)
   end
 end)
 
-script.on_event(defines.events.on_built_entity, onPlaceEntity)
-script.on_event(defines.events.on_robot_built_entity, onPlaceEntity)
+local filters = {
+}
+local names = {}
+for name in pairs(validEntityName) do
+  filters[#filters+1] = {filter="name",name=name}
+  filters[#filters+1] = {filter="ghost_name",name=name}
+  names[#names+1] = name
+end
 
-script.on_event(defines.events.on_pre_player_mined_item, function(event) onRemoveEntity(event.entity) end)
-script.on_event(defines.events.on_robot_pre_mined, function(event) onRemoveEntity(event.entity) end)
-script.on_event(defines.events.on_entity_died, function(event) onRemoveEntity(event.entity) end)
+script.on_event(defines.events.on_built_entity, function(event) onPlaceEntity(event.created_entity) end, filters)
+script.on_event(defines.events.on_robot_built_entity, function(event) onPlaceEntity(event.created_entity) end, filters)
+script.on_event(defines.events.script_raised_built, function(event) onPlaceEntity(event.entity) end)
+script.on_event(defines.events.script_raised_revive, function(event) onPlaceEntity(event.entity) end)
+script.on_event(defines.events.on_entity_cloned, function(event) onPlaceEntity(event.destination) end)
+
+script.on_event(defines.events.on_pre_player_mined_item, function(event) onRemoveEntity(event.entity) end, filters)
+script.on_event(defines.events.on_robot_pre_mined, function(event) onRemoveEntity(event.entity) end, filters)
+script.on_event(defines.events.on_entity_died, function(event) onRemoveEntity(event.entity) end, filters)
+script.on_event(defines.events.script_raised_destroy, function(event) onRemoveEntity(event.entity) end)
+script.on_event(defines.events.on_pre_chunk_deleted, function(event)
+  for _,chunk in pairs(event.positions) do
+    local x = chunk.x
+    local y = chunk.y
+    local area = {{x*32,y*32},{31+x*32,31+y*32}}
+    for _,ent in pairs(game.get_surface(event.surface_index).find_entities_filtered{name = names,area = area}) do
+      onRemoveEntity(ent)
+    end
+  end
+end)
+script.on_event(defines.events.on_pre_surface_cleared,function (event)
+  for _,ent in pairs(game.get_surface(event.surface_index).find_entities_filtered{name = names}) do
+    onRemoveEntity(ent)
+  end
+end)
+script.on_event(defines.events.on_pre_surface_deleted,function (event)
+  for _,ent in pairs(game.get_surface(event.surface_index).find_entities_filtered{name = names}) do
+    onRemoveEntity(ent)
+  end
+end)
 
 script.on_event(defines.events.on_tick, onTick)
