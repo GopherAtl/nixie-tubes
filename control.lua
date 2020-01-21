@@ -515,7 +515,7 @@ script.on_load(function()
   RegisterPicker()
 end)
 
-function RebuildNixies()
+local function RebuildNixies()
   -- clear the tables
   global = {
     alphas = {},
