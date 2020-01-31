@@ -5,5 +5,8 @@
   "title": "Nixie Tubes",
   "author": "GopherAtl, justarandomgeek",
   "description": "Adds nixie tubes, for displaying values from a connected circuit network.",
-  "dependencies": ["base", "?signalstrings >= 0.18.0", "?PickerExtended"]
+  "dependencies": ["base", "?signalstrings >= 0.18.0", "?PickerExtended"],
+  "package":{
+    "ignore":[ "*.zip", "*.pdn", "*.xcf" ]
+  }
 }
