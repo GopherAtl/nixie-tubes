@@ -483,7 +483,7 @@ local function RegisterPicker()
   if remote.interfaces["picker"] and remote.interfaces["picker"]["dolly_moved_entity_id"] then
     script.on_event(remote.call("picker", "dolly_moved_entity_id"), function(event)
       onRemoveEntity(event.moved_entity)
-      onPlaceEntity({created_entity=event.moved_entity})
+      onPlaceEntity(event.moved_entity)
     end)
   end
 end
@@ -531,7 +531,7 @@ local function RebuildNixies()
   for _,surf in pairs(game.surfaces) do
     -- re-index all nixies. non-nixie lamps will be ignored by onPlaceEntity
     for _,lamp in pairs(surf.find_entities_filtered{type="lamp"}) do
-      onPlaceEntity({created_entity=lamp})
+      onPlaceEntity(lamp)
     end
   end
 end
