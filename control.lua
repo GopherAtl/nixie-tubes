@@ -1,5 +1,4 @@
 -- luacheck: globals global settings game defines script
-if script.active_mods['debugadapter'] then require('__debugadapter__/debugadapter.lua') end
 local validEntityName = {
   ['nixie-tube']       = 1,
   ['nixie-tube-alpha'] = 1,
