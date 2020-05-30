@@ -104,7 +104,7 @@ local function setStates(nixie,cache,newstates,newcolor)
       if num == 1 then -- large tube, one sprite
         position = {x=1/32, y=1/32}
       else
-        position = {x=-9/64+((key-1)*20/64), y=3/64}
+        position = {x=-9/64+((key-1)*20/64), y=3/64} -- sprite offset
       end
       obj = rendering.draw_sprite{
         sprite = "nixie-tube-sprite-" .. new_state,
@@ -378,7 +378,7 @@ local function onPlaceEntity(entity)
       if num == 1 then -- large tube, one sprite
         position = {x=1/32, y=1/32}
       else
-        position = {x=-9/64+((n-1)*20/64), y=3/64}
+        position = {x=-9/64+((n-1)*20/64), y=3/64} -- sprite offset
       end
       local sprite= rendering.draw_sprite{
         sprite = "nixie-tube-sprite-off",
