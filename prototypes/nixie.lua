@@ -64,10 +64,10 @@ data:extend{
     {
       filename = "__nixie-tubes__/graphics/nixie-base.png",
       priority = "high",
-      width = 80,
-      height = 128,
-	  scale = 0.5,
-      shift = {4/32,0}
+      width = 80, -- New size image 2x
+      height = 128, -- New size image 2x
+	  scale = 0.5, -- Reduced so that the sprite does not crawl over the edges
+      shift = {4/32,0} -- Shift the sprite so that it does not overlap with neighboring grid cells
     },
     picture_on =
     {
@@ -128,10 +128,10 @@ data:extend{
     {
       filename = "__nixie-tubes__/graphics/nixie-base.png",
       priority = "high",
-      width = 80,
-      height = 128,
-	  scale = 0.5,
-      shift = {4/32,0}
+      width = 80, -- New size image 2x
+      height = 128, -- New size image 2x
+	  scale = 0.5, -- Reduced so that the sprite does not crawl over the edges
+      shift = {4/32,0} -- Shift the sprite so that it does not overlap with neighboring grid cells
     },
     picture_on =
     {
@@ -193,10 +193,10 @@ data:extend{
     {
       filename = "__nixie-tubes__/graphics/nixie-small-base.png",
       priority = "high",
-      width = 96,
-      height = 84,
-	  scale = 0.5,
-      shift = {8/32,-5/32}
+      width = 96, -- New size image 2x
+      height = 84, -- New size image 2x
+	  scale = 0.5, -- Reduced so that the sprite does not crawl over the edges
+      shift = {8/32,-5/32} -- Shift the sprite so that it does not overlap with neighboring grid cells
     },
     picture_on =
     {
@@ -218,13 +218,13 @@ function nixie_sprite(char,xoffset,yoffset)
       type = "sprite",
       name = "nixie-tube-sprite-" .. char,
       filename = "__nixie-tubes__/graphics/nixie-chars-mono.png",
-      x = xoffset * 40,
+      x = xoffset * 40, -- Increase the offset by image table
       y = yoffset * 88,
-      width = 40,
-      height = 88,
-	  scale = 0.5,
+      width = 40, -- New size image 2x
+      height = 88, -- New size image 2x
+	  scale = 0.5, -- Reduced so that the sprite does not crawl over the edges
       apply_runtime_tint = true,
-      shift = {-2/64,-18/64},
+      shift = {-2/64,-18/64}, -- Move the sprite to fit into the tube
     }
 end
 
