@@ -64,9 +64,10 @@ data:extend{
     {
       filename = "__nixie-tubes__/graphics/nixie-base.png",
       priority = "high",
-      width = 40,
-      height = 64,
-      shift = {0,0}
+      width = 80,
+      height = 128,
+	  scale = 0.5,
+      shift = {4/32,0}
     },
     picture_on =
     {
@@ -127,9 +128,10 @@ data:extend{
     {
       filename = "__nixie-tubes__/graphics/nixie-base.png",
       priority = "high",
-      width = 40,
-      height = 64,
-      shift = {0,0}
+      width = 80,
+      height = 128,
+	  scale = 0.5,
+      shift = {4/32,0}
     },
     picture_on =
     {
@@ -191,9 +193,10 @@ data:extend{
     {
       filename = "__nixie-tubes__/graphics/nixie-small-base.png",
       priority = "high",
-      width = 48,
-      height = 42,
-      shift = {4/32,-5/32}
+      width = 96,
+      height = 84,
+	  scale = 0.5,
+      shift = {8/32,-5/32}
     },
     picture_on =
     {
@@ -215,12 +218,13 @@ function nixie_sprite(char,xoffset,yoffset)
       type = "sprite",
       name = "nixie-tube-sprite-" .. char,
       filename = "__nixie-tubes__/graphics/nixie-chars-mono.png",
-      x = xoffset * 20,
-      y = yoffset * 44,
-      width = 20,
-      height = 44,
+      x = xoffset * 40,
+      y = yoffset * 88,
+      width = 40,
+      height = 88,
+	  scale = 0.5,
       apply_runtime_tint = true,
-      shift = {-5/32,-7/32},
+      shift = {-2/64,-18/64},
     }
 end
 
