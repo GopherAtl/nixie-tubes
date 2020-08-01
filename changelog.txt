@@ -2,6 +2,8 @@
 Version: 0.18.4
 Date: ????
   Changes:
+    - Updated Sprites thanks to Spectrus1702
+    - Correctly initialize unconnected Nixie Tube mode selection when built unconnected
 ---------------------------------------------------------------------------------------------------
 Version: 0.18.3
 Date: 2020-05-01
