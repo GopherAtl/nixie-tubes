@@ -279,8 +279,10 @@ local function onTickController(entity,cache)
   if cache.lastvalue ~= v or cache.control.use_colors then
     cache.lastvalue = v
 
-    local float = sigdata.float ~= 0
-    local hex = sigdata.hex ~= 0
+    local float = sigdata.float
+    float = float and float ~= 0
+    local hex = sigdata.hex
+    hex = hex and hex ~= 0
     local format = "%i"
     if float and hex then
       format = "%A"
