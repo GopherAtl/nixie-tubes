@@ -230,7 +230,7 @@ end
 
 local spritelist =
   {
-  ["0"]={x=0,y=0},
+  ["0"]=settings.startup["nixie-tube-slashed-zero"].value and {x=0,y=0} or {x=4,y=5},
   ["1"]={x=1,y=0},
   ["2"]={x=2,y=0},
   ["3"]={x=3,y=0},
