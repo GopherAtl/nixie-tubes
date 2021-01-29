@@ -1,3 +1,11 @@
+do
+  -- don't load if sim scenario has already loaded this (in another lua state)
+  local modloader = remote.interfaces["modloader"]
+  if modloader and modloader[script.mod_name] then
+    return
+  end
+end
+
 -- luacheck: globals global settings game defines script
 local validEntityName = {
   ['nixie-tube']       = 1,
@@ -88,6 +96,7 @@ local function RegisterStrings()
 end
 
 --sets the state(s) and update the sprite for a nixie
+local is_simulation = script.level.is_simulation
 local function setStates(nixie,cache,newstates,newcolor)
   for key,new_state in pairs(newstates) do
     if not new_state then new_state = "off" end
@@ -120,7 +129,7 @@ local function setStates(nixie,cache,newstates,newcolor)
       cache.sprites[key] = obj
     end
     
-    if nixie.energy > 70 then
+    if nixie.energy > 70 or is_simulation then
       rendering.set_sprite(obj,"nixie-tube-sprite-" .. new_state)
       
       local color = newcolor
@@ -536,6 +545,10 @@ local function RebuildNixies()
     end
   end
 end
+
+remote.add_interface("nixie-tubes",{
+  RebuildNixies = RebuildNixies
+})
 
 commands.add_command("RebuildNixies","Reset all Nixie Tubes to clear display glitches.", RebuildNixies)
 
