@@ -2,13 +2,14 @@ data:extend({
   {
   	type = "technology",
   	name = "cathodes",
-    icon = "__nixie-tubes__/graphics/nixie-base-icon.png",
+    icon = "__nixie-tubes__/graphics/nixie-technology-icon.png",
+    icon_size = 128,
   	unit = {
   		count=20,
       time=10,
       ingredients = {
-          {"science-pack-1", 1,},
-          {"science-pack-2", 1,},
+          {"automation-science-pack", 1,},
+          {"logistic-science-pack", 1,},
         },
     },
     prerequisites = {"advanced-electronics"},
