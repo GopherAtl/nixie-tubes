@@ -22,7 +22,7 @@ data:extend{
   {
     type = "recipe",
     name = "nixie-tube",
-    enabled = "false",
+    enabled = false,
     ingredients =
     {
       {"electronic-circuit",1},
@@ -86,7 +86,7 @@ data:extend{
   {
     type = "recipe",
     name = "nixie-tube-alpha",
-    enabled = "false",
+    enabled = false,
     ingredients =
     {
       {"electronic-circuit",1},
@@ -150,7 +150,7 @@ data:extend{
   {
     type = "recipe",
     name = "nixie-tube-small",
-    enabled = "false",
+    enabled = false,
     ingredients =
     {
       {"electronic-circuit",1},
